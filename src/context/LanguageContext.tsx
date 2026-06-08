@@ -16,6 +16,7 @@ interface LanguageContextType {
   setLanguage: (lang: Language) => Promise<void>;
   setLunchBreakMinutes: (minutes: number) => Promise<void>;
   setEveningBreakMinutes: (minutes: number) => Promise<void>;
+  setBreakTimes: (lunchBreakMinutes: number, eveningBreakMinutes: number) => Promise<void>;
   tr: (key: TranslationKey, params?: Record<string, string | number>) => string;
   loading: boolean;
 }
@@ -69,6 +70,17 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const setBreakTimes = useCallback(
+    async (lunchBreakMinutes: number, eveningBreakMinutes: number) => {
+      setSettings((prev) => {
+        const next = { ...prev, lunchBreakMinutes, eveningBreakMinutes };
+        AsyncStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(next));
+        return next;
+      });
+    },
+    []
+  );
+
   const tr = useCallback(
     (key: TranslationKey, params?: Record<string, string | number>) =>
       t(settings.language, key, params),
@@ -84,6 +96,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         setLanguage,
         setLunchBreakMinutes,
         setEveningBreakMinutes,
+        setBreakTimes,
         tr,
         loading,
       }}

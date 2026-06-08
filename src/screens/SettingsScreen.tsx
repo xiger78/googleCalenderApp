@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -73,8 +73,7 @@ export function SettingsScreen() {
     lunchBreakMinutes,
     eveningBreakMinutes,
     setLanguage,
-    setLunchBreakMinutes,
-    setEveningBreakMinutes,
+    setBreakTimes,
     tr,
   } = useLanguage();
   const { data } = useWorkDataContext();
@@ -91,21 +90,32 @@ export function SettingsScreen() {
   const [exporting, setExporting] = useState(false);
   const [lastCsvUri, setLastCsvUri] = useState<string | null>(null);
 
-  const [draftLunchMinutes, setDraftLunchMinutes] = useState(lunchBreakMinutes);
-  const [draftEveningMinutes, setDraftEveningMinutes] = useState(eveningBreakMinutes);
+  const toHourStr = (minutes: number) => String(Math.floor(minutes / 60)).padStart(2, '0');
+  const toMinuteStr = (minutes: number) => String(minutes % 60).padStart(2, '0');
+
+  const [draftLunchHour, setDraftLunchHour] = useState(() => toHourStr(lunchBreakMinutes));
+  const [draftLunchMinute, setDraftLunchMinute] = useState(() => toMinuteStr(lunchBreakMinutes));
+  const [draftEveningHour, setDraftEveningHour] = useState(() => toHourStr(eveningBreakMinutes));
+  const [draftEveningMinute, setDraftEveningMinute] = useState(() =>
+    toMinuteStr(eveningBreakMinutes)
+  );
   const [savingBreakTimes, setSavingBreakTimes] = useState(false);
 
   const totalBreakMinutes = lunchBreakMinutes + eveningBreakMinutes;
 
-  useEffect(() => {
-    setDraftLunchMinutes(lunchBreakMinutes);
-    setDraftEveningMinutes(eveningBreakMinutes);
-  }, [lunchBreakMinutes, eveningBreakMinutes]);
+  const syncBreakDraft = () => {
+    setDraftLunchHour(toHourStr(lunchBreakMinutes));
+    setDraftLunchMinute(toMinuteStr(lunchBreakMinutes));
+    setDraftEveningHour(toHourStr(eveningBreakMinutes));
+    setDraftEveningMinute(toMinuteStr(eveningBreakMinutes));
+  };
 
-  const draftLunchHour = String(Math.floor(draftLunchMinutes / 60)).padStart(2, '0');
-  const draftLunchMinute = String(draftLunchMinutes % 60).padStart(2, '0');
-  const draftEveningHour = String(Math.floor(draftEveningMinutes / 60)).padStart(2, '0');
-  const draftEveningMinute = String(draftEveningMinutes % 60).padStart(2, '0');
+  const parseDraftMinutes = (hour: string, minute: string) => {
+    const h = parseInt(hour || '0', 10);
+    const m = parseInt(minute || '0', 10);
+    if (isNaN(h) || isNaN(m)) return 0;
+    return h * 60 + m;
+  };
 
   const [emailTo, setEmailTo] = useState('');
   const [emailSubject, setEmailSubject] = useState('');
@@ -119,30 +129,29 @@ export function SettingsScreen() {
   );
 
   const toggle = (key: string) => {
-    setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+    setExpanded((prev) => {
+      const willExpand = !prev[key];
+      if (key === 'attendance' && willExpand) {
+        syncBreakDraft();
+      }
+      return { ...prev, [key]: willExpand };
+    });
   };
 
   const handleLanguageChange = (lang: string | number) => {
     setLanguage(lang as Language);
   };
 
-  const handleLunchChange = (part: 'hour' | 'minute', value: string) => {
-    const h = part === 'hour' ? parseInt(value || '0', 10) : parseInt(draftLunchHour, 10);
-    const m = part === 'minute' ? parseInt(value || '0', 10) : parseInt(draftLunchMinute, 10);
-    setDraftLunchMinutes(h * 60 + m);
-  };
-
-  const handleEveningChange = (part: 'hour' | 'minute', value: string) => {
-    const h = part === 'hour' ? parseInt(value || '0', 10) : parseInt(draftEveningHour, 10);
-    const m = part === 'minute' ? parseInt(value || '0', 10) : parseInt(draftEveningMinute, 10);
-    setDraftEveningMinutes(h * 60 + m);
-  };
-
   const handleSaveBreakTimes = async () => {
     setSavingBreakTimes(true);
     try {
-      await setLunchBreakMinutes(draftLunchMinutes);
-      await setEveningBreakMinutes(draftEveningMinutes);
+      const lunch = parseDraftMinutes(draftLunchHour, draftLunchMinute);
+      const evening = parseDraftMinutes(draftEveningHour, draftEveningMinute);
+      await setBreakTimes(lunch, evening);
+      setDraftLunchHour(toHourStr(lunch));
+      setDraftLunchMinute(toMinuteStr(lunch));
+      setDraftEveningHour(toHourStr(evening));
+      setDraftEveningMinute(toMinuteStr(evening));
       Alert.alert(tr('alertSaved'), tr('alertBreakTimeSaved'));
     } finally {
       setSavingBreakTimes(false);
@@ -212,7 +221,11 @@ export function SettingsScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
+    >
       <Text style={styles.pageTitle}>{tr('settingsTitle')}</Text>
 
       <SettingsCard
@@ -251,16 +264,16 @@ export function SettingsScreen() {
           label=""
           hour={draftLunchHour}
           minute={draftLunchMinute}
-          onHourChange={(v) => handleLunchChange('hour', v)}
-          onMinuteChange={(v) => handleLunchChange('minute', v)}
+          onHourChange={setDraftLunchHour}
+          onMinuteChange={setDraftLunchMinute}
         />
         <Text style={styles.label}>{tr('settingsEvening')}</Text>
         <TimeInput
           label=""
           hour={draftEveningHour}
           minute={draftEveningMinute}
-          onHourChange={(v) => handleEveningChange('hour', v)}
-          onMinuteChange={(v) => handleEveningChange('minute', v)}
+          onHourChange={setDraftEveningHour}
+          onMinuteChange={setDraftEveningMinute}
         />
         <View style={styles.saveBreakRow}>
           <Button
@@ -340,7 +353,7 @@ export function SettingsScreen() {
         )}
 
         <View style={styles.sendRow}>
-          <Button title={tr('emailSend')} onPress={handleSendMail} loading={sending} />
+          <Button title={tr('emailSend')} onPress={handleSendMail} loading={sending} fullWidth />
         </View>
       </SettingsCard>
     </ScrollView>
@@ -408,5 +421,5 @@ const styles = StyleSheet.create({
   attachBtnText: { color: '#fff', fontWeight: '600', fontSize: 13 },
   attachName: { flex: 1, fontSize: 13, color: '#555' },
   csvHint: { fontSize: 12, color: '#2e7d32', marginTop: 8 },
-  sendRow: { marginTop: 16, alignItems: 'flex-start' },
+  sendRow: { marginTop: 16 },
 });

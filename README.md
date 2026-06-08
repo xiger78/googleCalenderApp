@@ -209,12 +209,13 @@ Choose **Japanese**, **Korean**, or **English**. All screens update immediately.
 - Card: **Break Time (Lunch, Dinner)** under category **Break Time Settings**
 - **Lunch break** (excluded from work hours) — default **1 hour** (`01:00`)
 - **Dinner break** (excluded from work hours) — default **0 hours** (`00:00`)
-- Edit lunch and dinner times, then tap the full-width **Save** button below the dinner field
+- Edit **hour** and **minute** for lunch and dinner independently (HH hours MM minutes)
+- Opening the card loads the last saved values; tap the full-width **Save** button below the dinner field to apply both at once
 - Saved break times are subtracted when calculating work hours on History, save preview, and CSV export
 
 #### 5-3. Attendance Report (CSV) (근태장표출력(CSV))
 - Select export month
-- Tap **Export** to generate and share a CSV file (uses break times from §5-2)
+- Tap the full-width **Export** button to generate and share a CSV file (uses break times from §5-2)
 
 **CSV format example:**
 ```
@@ -227,7 +228,7 @@ Choose **Japanese**, **Korean**, or **English**. All screens update immediately.
 #### 5-4. Send Email
 - Enter recipient, subject, and body
 - Attach files (including exported CSV)
-- Tap **Send Email** to open the device mail app
+- Tap the full-width **Send Email** button to open the device mail app
 
 ![Settings](docs/images/en/screen-settings.png)
 
@@ -245,7 +246,8 @@ Choose **Japanese**, **Korean**, or **English**. All screens update immediately.
 | Bulk apply button | **Apply** button is **full width**, same as **Save** |
 | History layout | Date lines are **center-aligned**; colors match commute screen |
 | Work hours display | History and save preview show **(9.0)** / **(9.5)** style hours after clock-in/out (lunch + dinner breaks excluded) |
-| Break time settings | **Break Time (Lunch, Dinner)** card with defaults lunch **1h** / dinner **0h** and full-width **Save**; **Attendance Report (CSV)** card for export |
+| Break time settings | **Break Time (Lunch, Dinner)** card — editable HH/MM fields, full-width **Save** saves lunch+dinner together; **Attendance Report (CSV)** card for export |
+| Settings buttons | **Export**, break-time **Save**, and **Send Email** buttons are **full width** |
 | Total work hours | First line **`[Work hours:total]`** sums daily work hours on History and save preview |
 | Save preview format | Matches **Attendance History** line format (`YYYY/MM/DD(weekday) HH:MM-HH:MM (hours)`) |
 | Bulk time entry | Excludes **weekends** and **Japanese holidays** from bulk apply |
