@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { YearMonthSelector } from '../components/YearMonthSelector';
+import { YearMonthPicker } from '../components/YearMonthPicker';
 import { TimeInput } from '../components/TimeInput';
 import { TimeRangeInput } from '../components/TimeRangeInput';
 import { Button } from '../components/Button';
@@ -264,7 +264,7 @@ export function CommuteTimeScreen() {
         </TouchableOpacity>
       </View>
 
-      <YearMonthSelector year={year} month={month} onYearChange={setYear} onMonthChange={setMonth} />
+      <YearMonthPicker year={year} month={month} onYearChange={setYear} onMonthChange={setMonth} />
 
       <View style={styles.bulkBox}>
         <View style={styles.bulkHeader}>
@@ -296,9 +296,9 @@ export function CommuteTimeScreen() {
               compact
             />
           </View>
-          <TouchableOpacity style={styles.applyBtn} onPress={applyBulk} activeOpacity={0.8}>
-            <Text style={styles.applyBtnText}>{tr('bulkApplyAction')}</Text>
-          </TouchableOpacity>
+        </View>
+        <View style={styles.applyRow}>
+          <Button title={tr('bulkApplyAction')} onPress={applyBulk} fullWidth />
         </View>
         <Text style={styles.bulkNote}>{tr('bulkExcludeNote', { count: bulkApplyDays.length })}</Text>
       </View>
@@ -384,14 +384,7 @@ const styles = StyleSheet.create({
   },
   bulkTimeCol: { flex: 1, minWidth: 120 },
   bulkLabel: { fontSize: 12, fontWeight: '600', color: '#555', marginBottom: 4 },
-  applyBtn: {
-    backgroundColor: '#1976D2',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    marginBottom: 4,
-  },
-  applyBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  applyRow: { marginTop: 12 },
   bulkNote: { fontSize: 11, color: '#888', marginTop: 8 },
   dayList: { gap: 10 },
   dayCard: {

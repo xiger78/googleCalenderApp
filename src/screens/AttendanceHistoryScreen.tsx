@@ -88,9 +88,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderWidth: 1,
     borderColor: '#eee',
+    alignItems: 'center',
   },
   officeRow: { backgroundColor: '#F1F8E9', borderColor: '#A5D6A7' },
   remoteRow: { backgroundColor: '#E3F2FD', borderColor: '#90CAF9' },
   holidayRow: { backgroundColor: '#FCE4EC', borderColor: '#F8BBD0' },
-  listLine: { fontSize: 14, fontWeight: '500', color: '#333', lineHeight: 20 },
+  listLine: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+    lineHeight: 20,
+    textAlign: 'center',
+  },
 });
