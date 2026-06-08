@@ -111,10 +111,11 @@ The app features a **cute top banner** with **five link-button menus overlaid on
 Select office attendance days on a monthly calendar.
 
 **How to use:**
-- Choose year and month
-- Tap a date to mark it as an office day (green background)
+- Choose **year** and **month** using the same dropdown pickers as Attendance History
+- Tap a date to mark it as an office day (green circle)
 - Double-tap quickly on a marked date to unmark it
-- Selected dates are listed at the bottom
+- **Japanese national holidays** are shown with a **red circle** on the calendar
+- Legend at the bottom: green dot = office day, red dot = holiday
 
 ![Set Work Dates](docs/images/en/screen-work-date.png)
 
@@ -122,26 +123,28 @@ Select office attendance days on a monthly calendar.
 
 ### 2. Commute Times (出退勤時間入力)
 
-Enter clock-in and clock-out times for office and remote days.
+Enter clock-in and clock-out times for each day of the selected month.
 
 **How to use:**
-- Select year, month, and day
-- Enter clock-in / clock-out time using **HH hours MM minutes** pickers
-- Tap **Apply All** for clock-in or clock-out to bulk-apply to eligible weekdays in the month
-- Manually edit each office day and remote day individually (same time picker UI)
-- Tap **Reset** (next to the title) to clear all times for the month’s office/remote days to **00:00**
+- Select **year** and **month** using the same dropdown pickers as Attendance History
+- In the **Bulk Apply** section, enter clock-in / clock-out times and tap **Apply** (full-width button, same width as **Save**)
+- Edit each day individually with compact **HH hours MM minutes** inputs
+- Tap **Reset** (next to the title) to clear all times for the month to **00:00**
 - Tap **Save** to store data and preview the saved list
 
-**Bulk apply rules (updated):**
-- Applies to both **office and remote** days in the selected month
-- **Excludes Saturdays and Sundays**
-- **Excludes Japanese national holidays** (祝日), including:
-  - Fixed holidays (New Year's Day, National Foundation Day, Emperor's Birthday, etc.)
-  - Happy Monday holidays (Marine Day, Respect for the Aged Day, Sports Day)
-  - Vernal/Autumnal Equinox days
+**Day labels and card colors:**
+- Each row shows `YYYY/MM/DD(weekday):type` (e.g. `2026/06/03(Wed):Office`)
+- **Weekday, not marked on calendar** → `:Remote` (blue card)
+- **Weekday, marked as office day** → `:Office` (green card)
+- **Saturday, Sunday, or Japanese holiday, not marked** → `:Holiday` (pink card) — not shown as Remote
+- **Saturday, Sunday, or holiday marked on calendar** → `:Office` by default (green card); tap the date label (▼) to open a popup and switch between **Office** and **Remote**
+
+**Bulk apply rules:**
+- Applies to eligible **weekdays** in the selected month (both office and remote weekdays)
+- **Excludes Saturdays, Sundays, and Japanese national holidays**, including:
+  - Fixed holidays, Happy Monday holidays, Vernal/Autumnal Equinox days
   - Substitute holidays (振替休日) and Citizens' holidays (国民の休日)
 - The screen shows the number of eligible days (e.g. `Excludes Sat/Sun & JP holidays · N days`)
-- **Saturday, Sunday, and Japanese holidays** are shown with a **gray card background**
 
 ![Commute Times](docs/images/en/screen-commute-time.png)
 
@@ -149,12 +152,12 @@ Enter clock-in and clock-out times for office and remote days.
 
 ### 3. Google Calendar (Googleカレンダー連携)
 
-Register office days to Google Calendar.
+Connect a Google account for calendar integration.
 
 **How to use:**
 - Select year and month
-- Tap **Register to Google** to sign in and create calendar events
-- Office days and remote days are displayed at the bottom
+- Tap **Select Google Account** to sign in (or **Change Account** to switch)
+- A privacy note explains that you can choose the Google account on your device
 
 **Setup:** Set `EXPO_PUBLIC_GOOGLE_CLIENT_ID` in `.env` (see `.env.example`).
 
@@ -167,10 +170,10 @@ Register office days to Google Calendar.
 View monthly attendance records.
 
 **How to use:**
-- Select year and month
-- Tap **View** to display the list
-- Office days: `YYYYMMDD:Office`
-- Other days: `YYYYMMDD:Remote`
+- Select year and month with dropdown pickers
+- The list updates automatically for the selected month
+- Each row shows `YYYY/MM/DD(weekday) HH:MM-HH:MM`, **center-aligned**
+- Card colors match Commute Times: green = office, blue = remote, pink = holiday
 
 ![Attendance History](docs/images/en/screen-attendance-history.png)
 
@@ -210,15 +213,21 @@ Choose **Japanese**, **Korean**, or **English**. All screens update immediately.
 | Item | Description |
 |------|-------------|
 | Default language | **Japanese** on first launch (changeable in Settings) |
+| Year/month picker | **Work Dates**, **Commute Times**, **History**, and **Google** screens share the same dropdown style |
+| Calendar holidays | Japanese holidays shown as **red circles** on the work-date calendar |
+| Commute day types | Weekends/holidays show **:Holiday** (not Remote) unless marked on the calendar |
+| Holiday work days | Sat/Sun/holiday marked as office day defaults to **:Office**; tap label to switch Office/Remote via popup |
+| Bulk apply button | **Apply** button is **full width**, same as **Save** |
+| History layout | Date lines are **center-aligned**; colors match commute screen |
 | Bulk time entry | Excludes **weekends** and **Japanese holidays** from bulk apply |
-| Time input UI | Per-day editing uses **HH:MM picker** instead of free-text fields |
+| Time input UI | Per-day editing uses compact **HH:MM** inputs |
+| Google screen | Account select/change only (register button and schedule lists removed) |
 | Settings tab | Display language, attendance CSV export, email with attachments |
 | APK download | Pre-built APK available at `dist/출퇴근관리-v1.0.0.apk` in the repository |
-| Holiday logic | `src/utils/japaneseHolidays.ts` calculates Japan public holidays per year |
+| Holiday logic | `src/utils/japaneseHolidays.ts` and `src/utils/commuteDayType.ts` |
 | App layout | **Cute top banner** + **link-button navigation on banner** |
 | Menu labels | Shortened to **Dates · Times · Google · History · Settings** |
-| Off-day display | Gray background on weekend/holiday cards in Commute Times screen |
-| Reset times | **Reset** button on Commute Times title clears times to **00:00** |
+| Reset times | **Reset** on Commute Times clears all month times to **00:00** |
 
 ---
 
@@ -232,7 +241,7 @@ googleCalenderApp/
 │   ├── components/            # Banner, calendar, shared UI
 │   ├── context/               # Data & language context
 │   ├── i18n/                  # Translations (ja/ko/en)
-│   ├── utils/                 # Date, storage, CSV, Japanese holiday utilities
+│   ├── utils/                 # Date, storage, CSV, holidays, commute day-type utilities
 │   └── services/              # Google Calendar API
 ├── docs/images/
 │   ├── en/                    # English screen captures
