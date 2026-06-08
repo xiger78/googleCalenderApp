@@ -10,6 +10,7 @@ import {
   formatSlashDateWithWeekday,
 } from '../utils/dateUtils';
 import { getCommuteDayType } from '../utils/commuteDayType';
+import { getWorkHoursParenthetical } from '../utils/workDuration';
 import { getWeekdays } from '../i18n/translations';
 
 type HistoryItem = {
@@ -24,7 +25,7 @@ export function AttendanceHistoryScreen() {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const { data } = useWorkDataContext();
-  const { language, tr } = useLanguage();
+  const { language, lunchBreakMinutes, tr } = useLanguage();
   const weekdays = getWeekdays(language);
 
   const loadHistory = () => {
@@ -37,9 +38,11 @@ export function AttendanceHistoryScreen() {
       const dateLabel = formatSlashDateWithWeekday(dateKey, weekdays);
       const dayType = getCommuteDayType(dateKey, data.workDays, data.holidayWorkTypes);
 
+      const workHours = getWorkHoursParenthetical(clockIn, clockOut, lunchBreakMinutes);
+
       return {
         dateKey,
-        line: `${dateLabel} ${clockIn}-${clockOut}`,
+        line: `${dateLabel} ${clockIn}-${clockOut}${workHours}`,
         dayType,
       };
     });
@@ -49,7 +52,7 @@ export function AttendanceHistoryScreen() {
 
   useEffect(() => {
     loadHistory();
-  }, [year, month, data.workDays, data.commuteTimes, data.holidayWorkTypes, language]);
+  }, [year, month, data.workDays, data.commuteTimes, data.holidayWorkTypes, language, lunchBreakMinutes]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>

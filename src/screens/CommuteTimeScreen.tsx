@@ -18,10 +18,10 @@ import {
   formatTime,
   getDaysInMonth,
   isValidTime,
-  formatYYYYMMDD,
   parseTime,
   formatDateKey,
   formatDateWithTypeLabel,
+  formatSlashDateWithWeekday,
 } from '../utils/dateUtils';
 import { getBulkApplyDateKeys } from '../utils/japaneseHolidays';
 import {
@@ -30,13 +30,12 @@ import {
   getCommuteDayType,
 } from '../utils/commuteDayType';
 import { getWeekdays, TranslationKey } from '../i18n/translations';
+import { getWorkHoursParenthetical } from '../utils/workDuration';
 import { CommuteTime, HolidayWorkType } from '../types';
 
 type PreviewItem = {
-  date: string;
-  type: string;
-  clockIn: string;
-  clockOut: string;
+  dateKey: string;
+  line: string;
 };
 
 function typeLabelFor(
@@ -138,7 +137,7 @@ export function CommuteTimeScreen() {
   const [preview, setPreview] = useState<PreviewItem[]>([]);
 
   const { data, setCommuteTimes, setHolidayWorkType } = useWorkDataContext();
-  const { language, tr } = useLanguage();
+  const { language, lunchBreakMinutes, tr } = useLanguage();
   const bulkApplyDays = getBulkApplyDateKeys(year, month);
   const daysInMonth = getDaysInMonth(year, month);
   const weekdays = getWeekdays(language);
@@ -230,14 +229,15 @@ export function CommuteTimeScreen() {
 
     const savedList: PreviewItem[] = Array.from({ length: daysInMonth }, (_, i) => {
       const dateKey = formatDateKey(year, month, i + 1);
-      const dayType = getCommuteDayType(dateKey, data.workDays, data.holidayWorkTypes);
       const times = merged[dateKey];
       if (!times?.clockIn && !times?.clockOut) return null;
+      const clockIn = times.clockIn ?? '--:--';
+      const clockOut = times.clockOut ?? '--:--';
+      const dateLabel = formatSlashDateWithWeekday(dateKey, weekdays);
+      const workHours = getWorkHoursParenthetical(clockIn, clockOut, lunchBreakMinutes);
       return {
-        date: formatYYYYMMDD(dateKey),
-        type: typeLabelFor(tr, dayType),
-        clockIn: times.clockIn ?? '-',
-        clockOut: times.clockOut ?? '-',
+        dateKey,
+        line: `${dateLabel} ${clockIn}-${clockOut}${workHours}`,
       };
     }).filter(Boolean) as PreviewItem[];
 
@@ -330,9 +330,8 @@ export function CommuteTimeScreen() {
         <View style={styles.preview}>
           <Text style={styles.previewTitle}>{tr('previewTitle')}</Text>
           {preview.map((item) => (
-            <Text key={item.date} style={styles.previewItem}>
-              {item.date} · {item.type} | {tr('clockIn')} {item.clockIn} · {tr('clockOut')}{' '}
-              {item.clockOut}
+            <Text key={item.dateKey} style={styles.previewItem}>
+              {item.line}
             </Text>
           ))}
         </View>
@@ -401,5 +400,10 @@ const styles = StyleSheet.create({
   saveRow: { marginTop: 20 },
   preview: { marginTop: 24, padding: 16, backgroundColor: '#f3e5f5', borderRadius: 12 },
   previewTitle: { fontSize: 15, fontWeight: '600', marginBottom: 10, color: '#6a1b9a' },
-  previewItem: { fontSize: 14, color: '#333', lineHeight: 22 },
+  previewItem: {
+    fontSize: 14,
+    color: '#333',
+    lineHeight: 22,
+    textAlign: 'center',
+  },
 });

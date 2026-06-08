@@ -130,7 +130,12 @@ Enter clock-in and clock-out times for each day of the selected month.
 - In the **Bulk Apply** section, enter clock-in / clock-out times and tap **Apply** (full-width button, same width as **Save**)
 - Edit each day individually with compact **HH hours MM minutes** inputs
 - Tap **Reset** (next to the title) to clear all times for the month to **00:00**
-- Tap **Save** to store data and preview the saved list
+- Tap **Save** to store data and show a preview list below the button
+
+**Save preview (same format as Attendance History):**
+- Each saved row: `YYYY/MM/DD(weekday) HH:MM-HH:MM (work hours)`, center-aligned
+- Work hours = clock-out − clock-in − **lunch break** (from Settings), shown in parentheses as a decimal (e.g. `9.0` for 9 hours, `9.5` for 9.5 hours)
+- Example: `2026/06/03(Wed) 09:00-18:00 (8.0)`
 
 **Day labels and card colors:**
 - Each row shows `YYYY/MM/DD(weekday):type` (e.g. `2026/06/03(Wed):Office`)
@@ -172,7 +177,9 @@ View monthly attendance records.
 **How to use:**
 - Select year and month with dropdown pickers
 - The list updates automatically for the selected month
-- Each row shows `YYYY/MM/DD(weekday) HH:MM-HH:MM`, **center-aligned**
+- Each row shows `YYYY/MM/DD(weekday) HH:MM-HH:MM (work hours)`, **center-aligned**
+- Work hours in parentheses use the same decimal format as the save preview (lunch break excluded)
+- Example: `2026/06/03(Wed) 09:00-18:00 (8.0)`
 - Card colors match Commute Times: green = office, blue = remote, pink = holiday
 
 ![Attendance History](docs/images/en/screen-attendance-history.png)
@@ -219,12 +226,14 @@ Choose **Japanese**, **Korean**, or **English**. All screens update immediately.
 | Holiday work days | Sat/Sun/holiday marked as office day defaults to **:Office**; tap label to switch Office/Remote via popup |
 | Bulk apply button | **Apply** button is **full width**, same as **Save** |
 | History layout | Date lines are **center-aligned**; colors match commute screen |
+| Work hours display | History and save preview show **(9.0)** / **(9.5)** style hours after clock-in/out (lunch break excluded) |
+| Save preview format | Matches **Attendance History** line format (`YYYY/MM/DD(weekday) HH:MM-HH:MM (hours)`) |
 | Bulk time entry | Excludes **weekends** and **Japanese holidays** from bulk apply |
 | Time input UI | Per-day editing uses compact **HH:MM** inputs |
 | Google screen | Account select/change only (register button and schedule lists removed) |
 | Settings tab | Display language, attendance CSV export, email with attachments |
 | APK download | Pre-built APK available at `dist/출퇴근관리-v1.0.0.apk` in the repository |
-| Holiday logic | `src/utils/japaneseHolidays.ts` and `src/utils/commuteDayType.ts` |
+| Holiday logic | `src/utils/japaneseHolidays.ts`, `src/utils/commuteDayType.ts`, `src/utils/workDuration.ts` |
 | App layout | **Cute top banner** + **link-button navigation on banner** |
 | Menu labels | Shortened to **Dates · Times · Google · History · Settings** |
 | Reset times | **Reset** on Commute Times clears all month times to **00:00** |

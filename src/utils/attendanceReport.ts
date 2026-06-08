@@ -3,13 +3,7 @@ import * as Sharing from 'expo-sharing';
 import { Language } from '../i18n/types';
 import { WorkData } from '../types';
 import { formatDateKey, getDaysInMonth } from './dateUtils';
-
-function timeToMinutes(time: string): number | null {
-  if (!time || !time.includes(':')) return null;
-  const [h, m] = time.split(':').map(Number);
-  if (isNaN(h) || isNaN(m)) return null;
-  return h * 60 + m;
-}
+import { calcWorkMinutes } from './workDuration';
 
 function formatDuration(minutes: number, lang: Language): string {
   const h = Math.floor(minutes / 60);
@@ -20,17 +14,6 @@ function formatDuration(minutes: number, lang: Language): string {
   if (lang === 'ko') return `${hh}시간${mm}분`;
   if (lang === 'ja') return `${hh}時間${mm}分`;
   return `${hh}h${mm}m`;
-}
-
-function calcWorkMinutes(
-  clockIn: string,
-  clockOut: string,
-  lunchMinutes: number
-): number | null {
-  const inMin = timeToMinutes(clockIn);
-  const outMin = timeToMinutes(clockOut);
-  if (inMin === null || outMin === null || outMin <= inMin) return null;
-  return Math.max(0, outMin - inMin - lunchMinutes);
 }
 
 function formatTimeDisplay(time: string): string {
