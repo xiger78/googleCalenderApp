@@ -50,12 +50,10 @@ export function YearMonthSelector({ year, month, onYearChange, onMonthChange }: 
   return (
     <View style={styles.row}>
       <TouchableOpacity style={styles.selectorBtn} onPress={openYear} activeOpacity={0.7}>
-        <Text style={styles.selectorLabel}>YYYY</Text>
         <Text style={styles.selectorValue}>{year}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.selectorBtn} onPress={openMonth} activeOpacity={0.7}>
-        <Text style={styles.selectorLabel}>MM</Text>
         <Text style={styles.selectorValue}>{String(month).padStart(2, '0')}</Text>
       </TouchableOpacity>
 
@@ -122,12 +120,6 @@ const styles = StyleSheet.create({
     borderColor: '#d0d0d0',
     backgroundColor: '#fff',
     alignItems: 'center',
-  },
-  selectorLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#888',
-    marginBottom: 2,
   },
   selectorValue: {
     fontSize: 20,

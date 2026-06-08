@@ -8,9 +8,17 @@ interface Props {
   onHourChange: (v: string) => void;
   onMinuteChange: (v: string) => void;
   label: string;
+  compact?: boolean;
 }
 
-export function TimeInput({ hour, minute, onHourChange, onMinuteChange, label }: Props) {
+export function TimeInput({
+  hour,
+  minute,
+  onHourChange,
+  onMinuteChange,
+  label,
+  compact = false,
+}: Props) {
   const { tr } = useLanguage();
 
   return (
@@ -18,23 +26,23 @@ export function TimeInput({ hour, minute, onHourChange, onMinuteChange, label }:
       {label ? <Text style={styles.label}>{label}</Text> : null}
       <View style={styles.row}>
         <TextInput
-          style={styles.input}
+          style={compact ? styles.inputCompact : styles.input}
           value={hour}
           onChangeText={(t) => onHourChange(t.replace(/[^0-9]/g, '').slice(0, 2))}
           keyboardType="number-pad"
           placeholder="00"
           maxLength={2}
         />
-        <Text style={styles.sep}>{tr('hour')}</Text>
+        <Text style={compact ? styles.sepCompact : styles.sep}>{tr('hour')}</Text>
         <TextInput
-          style={styles.input}
+          style={compact ? styles.inputCompact : styles.input}
           value={minute}
           onChangeText={(t) => onMinuteChange(t.replace(/[^0-9]/g, '').slice(0, 2))}
           keyboardType="number-pad"
           placeholder="00"
           maxLength={2}
         />
-        <Text style={styles.sep}>{tr('minute')}</Text>
+        <Text style={compact ? styles.sepCompact : styles.sep}>{tr('minute')}</Text>
       </View>
     </View>
   );
@@ -69,5 +77,21 @@ const styles = StyleSheet.create({
     marginHorizontal: 6,
     fontSize: 15,
     color: '#555',
+  },
+  inputCompact: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    width: 36,
+    textAlign: 'center',
+    fontSize: 13,
+    backgroundColor: '#fafafa',
+  },
+  sepCompact: {
+    marginHorizontal: 2,
+    fontSize: 12,
+    color: '#666',
   },
 });

@@ -7,6 +7,9 @@ import {
 } from '../utils/dateUtils';
 import { useLanguage } from '../context/LanguageContext';
 import { getWeekdays } from '../i18n/translations';
+import { isJapaneseHoliday } from '../utils/japaneseHolidays';
+
+const HOLIDAY_COLOR = '#EF5350';
 
 interface Props {
   year: number;
@@ -76,7 +79,14 @@ export function CalendarGrid({
         {days.map((day) => {
           const dateKey = formatDateKey(year, month, day);
           const selected = selectedDates.includes(dateKey);
+          const holiday = isJapaneseHoliday(dateKey);
           const dow = (firstDay + day - 1) % 7;
+          const circleBg = selected
+            ? highlightColor
+            : holiday
+              ? HOLIDAY_COLOR
+              : undefined;
+
           return (
             <TouchableOpacity
               key={day}
@@ -84,13 +94,14 @@ export function CalendarGrid({
               onPress={() => handlePress(day)}
               activeOpacity={0.7}
             >
-              <View style={[styles.dayCircle, selected && { backgroundColor: highlightColor }]}>
+              <View style={[styles.dayCircle, circleBg ? { backgroundColor: circleBg } : null]}>
                 <Text
                   style={[
                     styles.dayText,
                     selected && styles.selectedText,
-                    dow === 0 && !selected && styles.sunday,
-                    dow === 6 && !selected && styles.saturday,
+                    holiday && !selected && styles.holidayText,
+                    dow === 0 && !selected && !holiday && styles.sunday,
+                    dow === 6 && !selected && !holiday && styles.saturday,
                   ]}
                 >
                   {day}
@@ -106,7 +117,7 @@ export function CalendarGrid({
           <Text style={styles.legendText}>{tr('legendOfficeDay')}</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={styles.legendDotOutline} />
+          <View style={[styles.legendDot, { backgroundColor: HOLIDAY_COLOR }]} />
           <Text style={styles.legendText}>{tr('legendHoliday')}</Text>
         </View>
       </View>
@@ -156,6 +167,10 @@ const styles = StyleSheet.create({
     color: '#1B5E20',
     fontWeight: '700',
   },
+  holidayText: {
+    color: '#fff',
+    fontWeight: '700',
+  },
   legendRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -172,14 +187,6 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-  },
-  legendDotOutline: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 1.5,
-    borderColor: '#BDBDBD',
-    backgroundColor: '#fff',
   },
   legendText: {
     fontSize: 13,

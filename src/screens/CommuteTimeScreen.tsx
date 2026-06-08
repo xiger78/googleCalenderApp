@@ -248,6 +248,7 @@ export function CommuteTimeScreen() {
               minute={clockInMinute}
               onHourChange={setClockInHour}
               onMinuteChange={setClockInMinute}
+              compact
             />
           </View>
           <View style={styles.bulkTimeCol}>
@@ -258,6 +259,7 @@ export function CommuteTimeScreen() {
               minute={clockOutMinute}
               onHourChange={setClockOutHour}
               onMinuteChange={setClockOutMinute}
+              compact
             />
           </View>
           <TouchableOpacity style={styles.applyBtn} onPress={applyBulk} activeOpacity={0.8}>
