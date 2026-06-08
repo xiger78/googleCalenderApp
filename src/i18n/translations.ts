@@ -33,6 +33,15 @@ const translations = {
     commuteTitle: '출퇴근 시각 입력',
     resetAll: '다시설정',
     legendOfficeDay: '출근일',
+    legendHoliday: '휴일',
+    weekdaysFull: '일요일,월요일,화요일,수요일,목요일,금요일,토요일',
+    officeShort: '출근',
+    remoteShort: '재택',
+    bulkApplyTitle: '일괄적용',
+    bulkApplyInlineDesc: '입력한 시각을 모든 대상일에 적용합니다.',
+    bulkApplyAction: '적용하기',
+    setAsHoliday: '휴일로 설정',
+    holidayLabel: '공휴일',
     officeWork: '사무실 근무',
     remoteWork: '재택 근무',
     weekendHoliday: '주말/공휴일',
@@ -138,6 +147,15 @@ const translations = {
     commuteTitle: '出退勤時刻入力',
     resetAll: '再設定',
     legendOfficeDay: '出勤日',
+    legendHoliday: '休日',
+    weekdaysFull: '日曜日,月曜日,火曜日,水曜日,木曜日,金曜日,土曜日',
+    officeShort: '出社',
+    remoteShort: 'リモート',
+    bulkApplyTitle: '一括適用',
+    bulkApplyInlineDesc: '入力した時刻を、すべての対象日に適用します',
+    bulkApplyAction: '適用する',
+    setAsHoliday: '休日として設定',
+    holidayLabel: '祝日',
     officeWork: 'オフィス勤務',
     remoteWork: '在宅勤務',
     weekendHoliday: '週末・祝日',
@@ -243,6 +261,15 @@ const translations = {
     commuteTitle: 'Commute Times',
     resetAll: 'Reset',
     legendOfficeDay: 'Office day',
+    legendHoliday: 'Day off',
+    weekdaysFull: 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday',
+    officeShort: 'Office',
+    remoteShort: 'Remote',
+    bulkApplyTitle: 'Bulk Apply',
+    bulkApplyInlineDesc: 'Apply entered times to all target days.',
+    bulkApplyAction: 'Apply',
+    setAsHoliday: 'Set as holiday',
+    holidayLabel: 'Holiday',
     officeWork: 'Office',
     remoteWork: 'Remote',
     weekendHoliday: 'Weekend/Holiday',
@@ -336,4 +363,8 @@ export function t(
 
 export function getWeekdays(lang: Language): string[] {
   return t(lang, 'weekdays').split(',');
+}
+
+export function getWeekdaysFull(lang: Language): string[] {
+  return t(lang, 'weekdaysFull').split(',');
 }

@@ -8,11 +8,10 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { YearMonthPicker } from '../components/YearMonthPicker';
+import { MonthNavigator } from '../components/MonthNavigator';
 import { TimeInput } from '../components/TimeInput';
 import { TimeRangeInput } from '../components/TimeRangeInput';
 import { Button } from '../components/Button';
-import { ScreenHeader } from '../components/ScreenHeader';
 import { useWorkDataContext } from '../context/WorkDataContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getWorkDaysInMonth } from '../utils/storage';
@@ -23,10 +22,10 @@ import {
   formatYYYYMMDD,
   parseTime,
   formatDateKey,
-  formatShortDateLabel,
+  isWeekend,
 } from '../utils/dateUtils';
 import { getBulkApplyDateKeys, isNonWorkingDay } from '../utils/japaneseHolidays';
-import { getWeekdays } from '../i18n/translations';
+import { getWeekdays, getWeekdaysFull } from '../i18n/translations';
 import { CommuteTime } from '../types';
 
 type PreviewItem = {
@@ -39,15 +38,18 @@ type PreviewItem = {
 function DayTimeRow({
   dateKey,
   isOffice,
-  offDay,
+  isOffDay,
+  isJpHoliday,
   times,
   onUpdateTime,
   tr,
   weekdays,
+  weekdaysFull,
 }: {
   dateKey: string;
   isOffice: boolean;
-  offDay: boolean;
+  isOffDay: boolean;
+  isJpHoliday: boolean;
   times: CommuteTime;
   onUpdateTime: (
     dateKey: string,
@@ -57,42 +59,61 @@ function DayTimeRow({
   ) => void;
   tr: (key: string, params?: Record<string, string | number>) => string;
   weekdays: string[];
+  weekdaysFull: string[];
 }) {
+  const dow = new Date(dateKey).getDay();
+  const weekdayChar = weekdays[dow];
+  const weekdayFull = weekdaysFull[dow];
   const clockIn = parseTime(times.clockIn);
   const clockOut = parseTime(times.clockOut);
 
-  const rowStyle = offDay
-    ? styles.offDayRow
-    : isOffice
-      ? styles.officeRow
-      : styles.remoteRow;
+  const rowStyle = isJpHoliday
+    ? styles.holidayRow
+    : isOffDay
+      ? styles.offDayRow
+      : isOffice
+        ? styles.officeRow
+        : styles.remoteRow;
+
+  const iconStyle = isJpHoliday
+    ? styles.holidayIcon
+    : isOffDay
+      ? styles.offDayIcon
+      : isOffice
+        ? styles.officeIcon
+        : styles.remoteIcon;
+
+  const dayTitle = isJpHoliday
+    ? tr('holidayLabel')
+    : isOffDay
+      ? weekdayFull
+      : `${weekdayFull} (${isOffice ? tr('officeShort') : tr('remoteShort')})`;
 
   return (
-    <View style={[styles.dayRow, rowStyle]}>
-      <Text style={styles.dayDate}>{formatShortDateLabel(dateKey, weekdays)}</Text>
-      <View
-        style={[
-          styles.typeBadge,
-          offDay
-            ? styles.offDayBadge
-            : isOffice
-              ? styles.officeBadge
-              : styles.remoteBadge,
-        ]}
-      >
-        <MaterialCommunityIcons
-          name={offDay ? 'calendar-remove' : isOffice ? 'office-building' : 'home-outline'}
-          size={14}
-          color={offDay ? '#757575' : isOffice ? '#2E7D32' : '#1565C0'}
-        />
-        <Text
-          style={[
-            styles.typeText,
-            offDay ? styles.offDayText : isOffice ? styles.officeText : styles.remoteText,
-          ]}
-        >
-          {offDay ? tr('weekendHoliday') : isOffice ? tr('officeWork') : tr('remoteWork')}
-        </Text>
+    <View style={[styles.dayCard, rowStyle]}>
+      <View style={styles.dayHeader}>
+        <View style={styles.dayHeaderLeft}>
+          <View style={[styles.dayIconCircle, iconStyle]}>
+            {isOffDay ? (
+              <MaterialCommunityIcons
+                name="calendar-remove"
+                size={18}
+                color={isJpHoliday ? '#C62828' : '#757575'}
+              />
+            ) : (
+              <Text style={[styles.dayIconText, isOffice ? styles.officeIconText : styles.remoteIconText]}>
+                {weekdayChar}
+              </Text>
+            )}
+          </View>
+          <Text style={styles.dayTitle}>{dayTitle}</Text>
+        </View>
+        {isOffDay && (
+          <View style={styles.holidayCheck}>
+            <MaterialCommunityIcons name="checkbox-marked" size={18} color="#757575" />
+            <Text style={styles.holidayCheckText}>{tr('setAsHoliday')}</Text>
+          </View>
+        )}
       </View>
       <TimeRangeInput
         compact
@@ -113,7 +134,6 @@ export function CommuteTimeScreen() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
-  const [bulkOpen, setBulkOpen] = useState(false);
 
   const [clockInHour, setClockInHour] = useState('09');
   const [clockInMinute, setClockInMinute] = useState('00');
@@ -130,6 +150,7 @@ export function CommuteTimeScreen() {
   const bulkApplyDays = getBulkApplyDateKeys(year, month);
   const daysInMonth = getDaysInMonth(year, month);
   const weekdays = getWeekdays(language);
+  const weekdaysFull = getWeekdaysFull(language);
 
   const getTimeForDate = (dateKey: string): CommuteTime => {
     return draftTimes[dateKey] ?? data.commuteTimes[dateKey] ?? { clockIn: '', clockOut: '' };
@@ -237,73 +258,73 @@ export function CommuteTimeScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <ScreenHeader
-        title={tr('commuteTitle')}
-        right={
-          <TouchableOpacity onPress={handleReset} style={styles.resetBtn} activeOpacity={0.7}>
-            <MaterialCommunityIcons name="refresh" size={14} color="#555" />
-            <Text style={styles.resetBtnText}>{tr('resetAll')}</Text>
+      <View style={styles.titleRow}>
+        <View style={styles.titleLeft}>
+          <MaterialCommunityIcons name="clock-outline" size={22} color="#1976D2" />
+          <Text style={styles.title}>{tr('commuteTitle')}</Text>
+        </View>
+        <TouchableOpacity onPress={handleReset} style={styles.resetBtn} activeOpacity={0.7}>
+          <MaterialCommunityIcons name="refresh" size={14} color="#555" />
+          <Text style={styles.resetBtnText}>{tr('resetAll')}</Text>
+        </TouchableOpacity>
+      </View>
+
+      <MonthNavigator year={year} month={month} onYearChange={setYear} onMonthChange={setMonth} />
+
+      <View style={styles.bulkBox}>
+        <View style={styles.bulkHeader}>
+          <MaterialCommunityIcons name="star-four-points" size={18} color="#1976D2" />
+          <Text style={styles.bulkTitle}>{tr('bulkApplyTitle')}</Text>
+        </View>
+        <Text style={styles.bulkDesc}>{tr('bulkApplyInlineDesc')}</Text>
+
+        <View style={styles.bulkTimeRow}>
+          <View style={styles.bulkTimeCol}>
+            <Text style={styles.bulkLabel}>{tr('clockIn')}</Text>
+            <TimeInput
+              label=""
+              hour={clockInHour}
+              minute={clockInMinute}
+              onHourChange={setClockInHour}
+              onMinuteChange={setClockInMinute}
+            />
+          </View>
+          <View style={styles.bulkTimeCol}>
+            <Text style={styles.bulkLabel}>{tr('clockOut')}</Text>
+            <TimeInput
+              label=""
+              hour={clockOutHour}
+              minute={clockOutMinute}
+              onHourChange={setClockOutHour}
+              onMinuteChange={setClockOutMinute}
+            />
+          </View>
+          <TouchableOpacity style={styles.applyBtn} onPress={applyBulk} activeOpacity={0.8}>
+            <Text style={styles.applyBtnText}>{tr('bulkApplyAction')}</Text>
           </TouchableOpacity>
-        }
-      />
-
-      <YearMonthPicker year={year} month={month} onYearChange={setYear} onMonthChange={setMonth} />
-
-      <TouchableOpacity
-        style={styles.bulkCard}
-        onPress={() => setBulkOpen((v) => !v)}
-        activeOpacity={0.8}
-      >
-        <View style={styles.bulkIconWrap}>
-          <MaterialCommunityIcons name="clipboard-check-outline" size={22} color="#2E7D32" />
         </View>
-        <View style={styles.bulkTextWrap}>
-          <Text style={styles.bulkTitle}>{tr('bulkRegister')}</Text>
-          <Text style={styles.bulkDesc}>{tr('bulkApplyDesc')}</Text>
-        </View>
-        <MaterialCommunityIcons
-          name={bulkOpen ? 'chevron-up' : 'chevron-right'}
-          size={22}
-          color="#888"
-        />
-      </TouchableOpacity>
-
-      {bulkOpen && (
-        <View style={styles.bulkPanel}>
-          <Text style={styles.bulkNote}>
-            {tr('bulkExcludeNote', { count: bulkApplyDays.length })}
-          </Text>
-          <TimeInput
-            label={tr('clockIn')}
-            hour={clockInHour}
-            minute={clockInMinute}
-            onHourChange={setClockInHour}
-            onMinuteChange={setClockInMinute}
-          />
-          <TimeInput
-            label={tr('clockOut')}
-            hour={clockOutHour}
-            minute={clockOutMinute}
-            onHourChange={setClockOutHour}
-            onMinuteChange={setClockOutMinute}
-          />
-          <Button title={tr('bulkRegister')} onPress={applyBulk} variant="success" fullWidth />
-        </View>
-      )}
+        <Text style={styles.bulkNote}>{tr('bulkExcludeNote', { count: bulkApplyDays.length })}</Text>
+      </View>
 
       <View style={styles.dayList}>
-        {monthDays.map((dateKey) => (
-          <DayTimeRow
-            key={dateKey}
-            dateKey={dateKey}
-            isOffice={workSet.has(dateKey)}
-            offDay={isNonWorkingDay(dateKey)}
-            times={getTimeForDate(dateKey)}
-            onUpdateTime={updateTimePart}
-            tr={tr}
-            weekdays={weekdays}
-          />
-        ))}
+        {monthDays.map((dateKey) => {
+          const offDay = isNonWorkingDay(dateKey);
+          const jpHoliday = offDay && !isWeekend(dateKey);
+          return (
+            <DayTimeRow
+              key={dateKey}
+              dateKey={dateKey}
+              isOffice={workSet.has(dateKey)}
+              isOffDay={offDay}
+              isJpHoliday={jpHoliday}
+              times={getTimeForDate(dateKey)}
+              onUpdateTime={updateTimePart}
+              tr={tr}
+              weekdays={weekdays}
+              weekdaysFull={weekdaysFull}
+            />
+          );
+        })}
       </View>
 
       <View style={styles.saveRow}>
@@ -328,6 +349,15 @@ export function CommuteTimeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   content: { padding: 16, paddingBottom: 32 },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    gap: 8,
+  },
+  titleLeft: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 },
+  title: { fontSize: 18, fontWeight: '700', color: '#222' },
   resetBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -340,61 +370,69 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
   },
   resetBtnText: { fontSize: 12, fontWeight: '600', color: '#555' },
-  bulkCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#E8F5E9',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 12,
-    gap: 10,
-  },
-  bulkIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: '#C8E6C9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bulkTextWrap: { flex: 1 },
-  bulkTitle: { fontSize: 15, fontWeight: '700', color: '#2E7D32' },
-  bulkDesc: { fontSize: 12, color: '#558B2F', marginTop: 2 },
-  bulkPanel: {
-    backgroundColor: '#f8f9fa',
+  bulkBox: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
     borderRadius: 12,
     padding: 14,
     marginBottom: 16,
-    marginTop: -4,
+    backgroundColor: '#fafafa',
   },
-  bulkNote: { fontSize: 12, color: '#666', marginBottom: 10 },
-  dayList: { gap: 8 },
-  dayRow: {
-    borderRadius: 12,
-    padding: 12,
+  bulkHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
+  bulkTitle: { fontSize: 15, fontWeight: '700', color: '#333' },
+  bulkDesc: { fontSize: 12, color: '#666', marginBottom: 12 },
+  bulkTimeRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    flexWrap: 'wrap',
     gap: 8,
   },
-  officeRow: { backgroundColor: '#F1F8E9' },
-  remoteRow: { backgroundColor: '#E3F2FD' },
-  offDayRow: { backgroundColor: '#EEEEEE' },
-  dayDate: { fontSize: 14, fontWeight: '600', color: '#333' },
-  typeBadge: {
+  bulkTimeCol: { flex: 1, minWidth: 120 },
+  bulkLabel: { fontSize: 12, fontWeight: '600', color: '#555', marginBottom: 4 },
+  applyBtn: {
+    backgroundColor: '#1976D2',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 4,
+  },
+  applyBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  bulkNote: { fontSize: 11, color: '#888', marginTop: 8 },
+  dayList: { gap: 10 },
+  dayCard: {
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    gap: 10,
+  },
+  officeRow: { backgroundColor: '#F1F8E9', borderColor: '#C8E6C9' },
+  remoteRow: { backgroundColor: '#E3F2FD', borderColor: '#BBDEFB' },
+  offDayRow: { backgroundColor: '#F5F5F5', borderColor: '#E0E0E0' },
+  holidayRow: { backgroundColor: '#FCE4EC', borderColor: '#F8BBD0' },
+  dayHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 14,
-    borderWidth: 1,
+    justifyContent: 'space-between',
+    gap: 8,
   },
-  officeBadge: { backgroundColor: '#fff', borderColor: '#A5D6A7' },
-  remoteBadge: { backgroundColor: '#fff', borderColor: '#90CAF9' },
-  offDayBadge: { backgroundColor: '#fff', borderColor: '#BDBDBD' },
-  typeText: { fontSize: 12, fontWeight: '600' },
-  officeText: { color: '#2E7D32' },
-  remoteText: { color: '#1565C0' },
-  offDayText: { color: '#757575' },
+  dayHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
+  dayIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  officeIcon: { backgroundColor: '#C8E6C9' },
+  remoteIcon: { backgroundColor: '#BBDEFB' },
+  offDayIcon: { backgroundColor: '#EEEEEE' },
+  holidayIcon: { backgroundColor: '#FFCDD2' },
+  dayIconText: { fontSize: 15, fontWeight: '700' },
+  officeIconText: { color: '#2E7D32' },
+  remoteIconText: { color: '#1565C0' },
+  dayTitle: { fontSize: 14, fontWeight: '700', color: '#333', flex: 1 },
+  holidayCheck: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  holidayCheckText: { fontSize: 10, color: '#757575', fontWeight: '600' },
   saveRow: { marginTop: 20 },
   preview: { marginTop: 24, padding: 16, backgroundColor: '#f3e5f5', borderRadius: 12 },
   previewTitle: { fontSize: 15, fontWeight: '600', marginBottom: 10, color: '#6a1b9a' },

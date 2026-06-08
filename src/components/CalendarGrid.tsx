@@ -100,9 +100,15 @@ export function CalendarGrid({
           );
         })}
       </View>
-      <View style={styles.legend}>
-        <View style={[styles.legendDot, { backgroundColor: highlightColor }]} />
-        <Text style={styles.legendText}>{tr('legendOfficeDay')}</Text>
+      <View style={styles.legendRow}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: highlightColor }]} />
+          <Text style={styles.legendText}>{tr('legendOfficeDay')}</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={styles.legendDotOutline} />
+          <Text style={styles.legendText}>{tr('legendHoliday')}</Text>
+        </View>
       </View>
       <Text style={styles.hint}>{tr('calendarHint')}</Text>
     </View>
@@ -150,17 +156,30 @@ const styles = StyleSheet.create({
     color: '#1B5E20',
     fontWeight: '700',
   },
-  legend: {
+  legendRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 12,
+    gap: 20,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 6,
   },
   legendDot: {
     width: 12,
     height: 12,
     borderRadius: 6,
+  },
+  legendDotOutline: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#BDBDBD',
+    backgroundColor: '#fff',
   },
   legendText: {
     fontSize: 13,
