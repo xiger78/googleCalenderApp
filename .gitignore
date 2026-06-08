@@ -1,6 +1,5 @@
 node_modules/
 .expo/
-dist/
 npm-debug.*
 *.jks
 *.p8
@@ -9,7 +8,6 @@ npm-debug.*
 *.mobileprovision
 *.orig.*
 web-build/
-dist/
 .env
 .env.local
 
@@ -17,5 +15,4 @@ dist/
 android/app/build/
 android/build/
 android/.gradle/
-*.apk
 .DS_Store
