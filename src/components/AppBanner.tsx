@@ -1,113 +1,138 @@
 import React from 'react';
-import {
-  Image,
-  StyleSheet,
-  View,
-  TouchableOpacity,
-  Text,
-  ScrollView,
-} from 'react-native';
+import { Image, StyleSheet, View, TouchableOpacity, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { MaterialTopTabBarProps } from '@react-navigation/material-top-tabs';
 
-const BANNER_HEIGHT = 56;
-const NAV_HEIGHT = 36;
+const BANNER_HEIGHT = 88;
+const NAV_CARD_HEIGHT = 72;
+
+type TabIconName = keyof typeof MaterialCommunityIcons.glyphMap;
+
+const TAB_CONFIG: Record<string, { icon: TabIconName; activeColor: string }> = {
+  WorkDate: { icon: 'calendar-month', activeColor: '#1976D2' },
+  CommuteTime: { icon: 'clock-outline', activeColor: '#4CAF50' },
+  GoogleCalendar: { icon: 'google', activeColor: '#1976D2' },
+  AttendanceHistory: { icon: 'clipboard-text-outline', activeColor: '#1976D2' },
+  Settings: { icon: 'cog-outline', activeColor: '#616161' },
+};
 
 export function BannerTabBar({ state, descriptors, navigation }: MaterialTopTabBarProps) {
   const insets = useSafeAreaInsets();
 
   return (
     <View style={[styles.wrap, { paddingTop: insets.top }]}>
-      <View style={styles.bannerArea}>
-        <Image
-          source={require('../../assets/banner.png')}
-          style={styles.banner}
-          resizeMode="cover"
-          accessibilityLabel="App banner"
-        />
-        <View style={styles.navOverlay}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.navScroll}
-          >
-            {state.routes.map((route, index) => {
-              const { options } = descriptors[route.key];
-              const label = options.title ?? route.name;
-              const isFocused = state.index === index;
+      <Image
+        source={require('../../assets/banner.png')}
+        style={styles.banner}
+        resizeMode="cover"
+        accessibilityLabel="App banner"
+      />
+      <View style={styles.navCard}>
+        <View style={styles.navRow}>
+          {state.routes.map((route, index) => {
+            const { options } = descriptors[route.key];
+            const label = options.title ?? route.name;
+            const isFocused = state.index === index;
+            const config = TAB_CONFIG[route.name] ?? TAB_CONFIG.WorkDate;
+            const color = isFocused ? config.activeColor : '#757575';
 
-              return (
-                <TouchableOpacity
-                  key={route.key}
-                  onPress={() => {
-                    const event = navigation.emit({
-                      type: 'tabPress',
-                      target: route.key,
-                      canPreventDefault: true,
-                    });
-                    if (!isFocused && !event.defaultPrevented) {
-                      navigation.navigate(route.name);
-                    }
-                  }}
-                  style={[styles.navBtn, isFocused && styles.navBtnActive]}
-                  activeOpacity={0.7}
+            return (
+              <TouchableOpacity
+                key={route.key}
+                onPress={() => {
+                  const event = navigation.emit({
+                    type: 'tabPress',
+                    target: route.key,
+                    canPreventDefault: true,
+                  });
+                  if (!isFocused && !event.defaultPrevented) {
+                    navigation.navigate(route.name);
+                  }
+                }}
+                style={styles.navItem}
+                activeOpacity={0.7}
+              >
+                <View
+                  style={[
+                    styles.iconWrap,
+                    isFocused && { backgroundColor: `${config.activeColor}18` },
+                  ]}
                 >
-                  <Text style={[styles.navLabel, isFocused && styles.navLabelActive]}>
-                    {label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+                  <MaterialCommunityIcons name={config.icon} size={20} color={color} />
+                </View>
+                <Text style={[styles.navLabel, isFocused && { color, fontWeight: '700' }]}>
+                  {label}
+                </Text>
+                {isFocused ? (
+                  <View style={[styles.activeBar, { backgroundColor: config.activeColor }]} />
+                ) : (
+                  <View style={styles.activeBarPlaceholder} />
+                )}
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
     </View>
   );
 }
 
-export const APP_BANNER_HEIGHT = BANNER_HEIGHT + NAV_HEIGHT;
+export const APP_BANNER_HEIGHT = BANNER_HEIGHT + NAV_CARD_HEIGHT - 12;
 
 const styles = StyleSheet.create({
   wrap: {
     backgroundColor: '#E3F2FD',
   },
-  bannerArea: {
-    position: 'relative',
-  },
   banner: {
     width: '100%',
     height: BANNER_HEIGHT,
   },
-  navOverlay: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.82)',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(25, 118, 210, 0.25)',
-  },
-  navScroll: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  navCard: {
+    marginHorizontal: 12,
+    marginTop: -10,
+    marginBottom: 4,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    paddingVertical: 8,
     paddingHorizontal: 4,
-    minHeight: NAV_HEIGHT,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  navBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    marginHorizontal: 2,
-    borderRadius: 14,
+  navRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'flex-start',
   },
-  navBtnActive: {
-    backgroundColor: '#1976D2',
+  navItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 2,
+  },
+  iconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
   },
   navLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600',
-    color: '#555',
+    color: '#757575',
+    textAlign: 'center',
   },
-  navLabelActive: {
-    color: '#fff',
+  activeBar: {
+    width: '70%',
+    height: 3,
+    borderRadius: 2,
+    marginTop: 4,
+  },
+  activeBarPlaceholder: {
+    height: 7,
   },
 });

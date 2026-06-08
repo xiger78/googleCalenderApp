@@ -23,7 +23,7 @@ export function CalendarGrid({
   month,
   selectedDates,
   onDatePress,
-  highlightColor = '#4CAF50',
+  highlightColor = '#A5D6A7',
 }: Props) {
   const { language, tr } = useLanguage();
   const weekdays = getWeekdays(language);
@@ -80,23 +80,29 @@ export function CalendarGrid({
           return (
             <TouchableOpacity
               key={day}
-              style={[styles.cell, selected && { backgroundColor: highlightColor }]}
+              style={styles.cell}
               onPress={() => handlePress(day)}
               activeOpacity={0.7}
             >
-              <Text
-                style={[
-                  styles.dayText,
-                  selected && styles.selectedText,
-                  dow === 0 && !selected && styles.sunday,
-                  dow === 6 && !selected && styles.saturday,
-                ]}
-              >
-                {day}
-              </Text>
+              <View style={[styles.dayCircle, selected && { backgroundColor: highlightColor }]}>
+                <Text
+                  style={[
+                    styles.dayText,
+                    selected && styles.selectedText,
+                    dow === 0 && !selected && styles.sunday,
+                    dow === 6 && !selected && styles.saturday,
+                  ]}
+                >
+                  {day}
+                </Text>
+              </View>
             </TouchableOpacity>
           );
         })}
+      </View>
+      <View style={styles.legend}>
+        <View style={[styles.legendDot, { backgroundColor: highlightColor }]} />
+        <Text style={styles.legendText}>{tr('legendOfficeDay')}</Text>
       </View>
       <Text style={styles.hint}>{tr('calendarHint')}</Text>
     </View>
@@ -127,16 +133,38 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 8,
     marginVertical: 2,
+  },
+  dayCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   dayText: {
     fontSize: 15,
     color: '#333',
   },
   selectedText: {
-    color: '#fff',
+    color: '#1B5E20',
     fontWeight: '700',
+  },
+  legend: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    gap: 6,
+  },
+  legendDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  legendText: {
+    fontSize: 13,
+    color: '#555',
   },
   sunday: {
     color: '#e53935',

@@ -46,5 +46,14 @@ export function parseTime(time: string): { hour: string; minute: string } {
 
 export const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
+export function formatShortDateLabel(
+  dateKey: string,
+  weekdays: string[]
+): string {
+  const { month, day } = parseDateKey(dateKey);
+  const dow = weekdays[new Date(dateKey).getDay()];
+  return `${month}.${day} (${dow})`;
+}
+
 export const YEARS = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 2 + i);
 export const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);

@@ -8,6 +8,7 @@ import {
   Alert,
   TouchableOpacity,
 } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as MailComposer from 'expo-mail-composer';
 import * as DocumentPicker from 'expo-document-picker';
 import { YearMonthPicker } from '../components/YearMonthPicker';
@@ -19,10 +20,63 @@ import { useWorkDataContext } from '../context/WorkDataContext';
 import { LANGUAGE_OPTIONS, Language } from '../i18n/types';
 import { exportAttendanceCsv } from '../utils/attendanceReport';
 
+function SettingsCard({
+  category,
+  icon,
+  iconColor,
+  iconBg,
+  title,
+  description,
+  right,
+  children,
+  expanded,
+  onToggle,
+}: {
+  category: string;
+  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  iconColor: string;
+  iconBg: string;
+  title: string;
+  description: string;
+  right?: string;
+  children?: React.ReactNode;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <View style={styles.cardWrap}>
+      <Text style={styles.category}>{category}</Text>
+      <TouchableOpacity style={styles.card} onPress={onToggle} activeOpacity={0.85}>
+        <View style={[styles.cardIcon, { backgroundColor: iconBg }]}>
+          <MaterialCommunityIcons name={icon} size={22} color={iconColor} />
+        </View>
+        <View style={styles.cardText}>
+          <Text style={styles.cardTitle}>{title}</Text>
+          <Text style={styles.cardDesc}>{description}</Text>
+        </View>
+        {right ? <Text style={styles.cardRight}>{right}</Text> : null}
+        <MaterialCommunityIcons
+          name={expanded ? 'chevron-up' : 'chevron-right'}
+          size={22}
+          color="#bbb"
+        />
+      </TouchableOpacity>
+      {expanded && children ? <View style={styles.cardBody}>{children}</View> : null}
+    </View>
+  );
+}
+
 export function SettingsScreen() {
   const now = new Date();
   const { language, lunchBreakMinutes, setLanguage, setLunchBreakMinutes, tr } = useLanguage();
   const { data } = useWorkDataContext();
+
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({
+    language: true,
+    attendance: false,
+    export: false,
+    email: false,
+  });
 
   const [reportYear, setReportYear] = useState(now.getFullYear());
   const [reportMonth, setReportMonth] = useState(now.getMonth() + 1);
@@ -38,6 +92,14 @@ export function SettingsScreen() {
   const [attachmentUri, setAttachmentUri] = useState<string | null>(null);
   const [attachmentName, setAttachmentName] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+
+  const langLabel = tr(
+    LANGUAGE_OPTIONS.find((o) => o.value === language)?.labelKey ?? 'langJa'
+  );
+
+  const toggle = (key: string) => {
+    setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   const handleLanguageChange = (lang: string | number) => {
     setLanguage(lang as Language);
@@ -98,9 +160,10 @@ export function SettingsScreen() {
         attachments: attachments.length > 0 ? attachments : undefined,
       });
 
-      if (result.status === MailComposer.MailComposerStatus.SENT) {
-        Alert.alert(tr('alertDone'), tr('alertMailSent'));
-      } else if (result.status === MailComposer.MailComposerStatus.SAVED) {
+      if (
+        result.status === MailComposer.MailComposerStatus.SENT ||
+        result.status === MailComposer.MailComposerStatus.SAVED
+      ) {
         Alert.alert(tr('alertDone'), tr('alertMailSent'));
       }
     } catch (e) {
@@ -112,11 +175,19 @@ export function SettingsScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>{tr('settingsTitle')}</Text>
+      <Text style={styles.pageTitle}>{tr('settingsTitle')}</Text>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{tr('settingsLanguage')}</Text>
-        <Text style={styles.sectionDesc}>{tr('settingsLanguageDesc')}</Text>
+      <SettingsCard
+        category={tr('settingsLanguage')}
+        icon="earth"
+        iconColor="#1976D2"
+        iconBg="#E3F2FD"
+        title={tr('settingsLanguageItem')}
+        description={tr('settingsLanguageItemDesc')}
+        right={langLabel}
+        expanded={expanded.language}
+        onToggle={() => toggle('language')}
+      >
         <Picker
           selectedValue={language}
           onValueChange={handleLanguageChange}
@@ -125,17 +196,18 @@ export function SettingsScreen() {
             value: opt.value,
           }))}
         />
-      </View>
+      </SettingsCard>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{tr('settingsReport')}</Text>
-        <Text style={styles.sectionDesc}>{tr('settingsReportDesc')}</Text>
-        <YearMonthPicker
-          year={reportYear}
-          month={reportMonth}
-          onYearChange={setReportYear}
-          onMonthChange={setReportMonth}
-        />
+      <SettingsCard
+        category={tr('settingsReport')}
+        icon="calendar-check"
+        iconColor="#4CAF50"
+        iconBg="#E8F5E9"
+        title={tr('settingsReportItem')}
+        description={tr('settingsReportItemDesc')}
+        expanded={expanded.attendance}
+        onToggle={() => toggle('attendance')}
+      >
         <Text style={styles.label}>{tr('settingsLunch')}</Text>
         <TimeInput
           label=""
@@ -144,13 +216,37 @@ export function SettingsScreen() {
           onHourChange={(v) => handleLunchChange('hour', v)}
           onMinuteChange={(v) => handleLunchChange('minute', v)}
         />
+      </SettingsCard>
+
+      <SettingsCard
+        category={tr('settingsReport')}
+        icon="printer"
+        iconColor="#7B1FA2"
+        iconBg="#F3E5F5"
+        title={tr('settingsExportItem')}
+        description={tr('settingsExportItemDesc')}
+        expanded={expanded.export}
+        onToggle={() => toggle('export')}
+      >
+        <YearMonthPicker
+          year={reportYear}
+          month={reportMonth}
+          onYearChange={setReportYear}
+          onMonthChange={setReportMonth}
+        />
         <Button title={tr('export')} onPress={handleExport} loading={exporting} />
-      </View>
+      </SettingsCard>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{tr('settingsEmail')}</Text>
-        <Text style={styles.sectionDesc}>{tr('settingsEmailDesc')}</Text>
-
+      <SettingsCard
+        category={tr('settingsEmail')}
+        icon="email-outline"
+        iconColor="#1976D2"
+        iconBg="#E3F2FD"
+        title={tr('settingsEmailItem')}
+        description={tr('settingsEmailItemDesc')}
+        expanded={expanded.email}
+        onToggle={() => toggle('email')}
+      >
         <Text style={styles.label}>{tr('emailTo')}</Text>
         <TextInput
           style={styles.input}
@@ -192,23 +288,49 @@ export function SettingsScreen() {
         <View style={styles.sendRow}>
           <Button title={tr('emailSend')} onPress={handleSendMail} loading={sending} />
         </View>
-      </View>
+      </SettingsCard>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: '#f5f5f5' },
   content: { padding: 16, paddingBottom: 40 },
-  title: { fontSize: 20, fontWeight: '700', marginBottom: 16, color: '#222' },
-  section: {
-    marginBottom: 24,
+  pageTitle: { fontSize: 20, fontWeight: '700', marginBottom: 16, color: '#222' },
+  cardWrap: { marginBottom: 16 },
+  category: { fontSize: 13, fontWeight: '600', color: '#888', marginBottom: 6, marginLeft: 4 },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 14,
     padding: 14,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#333', marginBottom: 4 },
-  sectionDesc: { fontSize: 13, color: '#666', marginBottom: 12 },
+  cardIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardText: { flex: 1 },
+  cardTitle: { fontSize: 15, fontWeight: '700', color: '#222' },
+  cardDesc: { fontSize: 12, color: '#888', marginTop: 2, lineHeight: 17 },
+  cardRight: { fontSize: 13, fontWeight: '600', color: '#1976D2', marginRight: 4 },
+  cardBody: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    marginTop: 8,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
   label: { fontSize: 14, fontWeight: '600', marginBottom: 6, marginTop: 8, color: '#333' },
   input: {
     borderWidth: 1,
