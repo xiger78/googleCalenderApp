@@ -102,7 +102,7 @@ The app runs on **Android 6.0 and above**. It is optimized for Android 14.
 
 ## Features
 
-The app features a **cute top banner** and **five bottom tab menus**. The default display language is **Japanese** (configurable to Korean or English in Settings).
+The app features a **cute top banner** with **five link-button menus overlaid on the banner image**: **Dates · Times · Google · History · Settings**. The default display language is **Japanese** (configurable to Korean or English in Settings).
 
 ---
 
@@ -129,6 +129,7 @@ Enter clock-in and clock-out times for office and remote days.
 - Enter clock-in / clock-out time using **HH hours MM minutes** pickers
 - Tap **Apply All** for clock-in or clock-out to bulk-apply to eligible weekdays in the month
 - Manually edit each office day and remote day individually (same time picker UI)
+- Tap **Reset** (next to the title) to clear all times for the month’s office/remote days to **00:00**
 - Tap **Save** to store data and preview the saved list
 
 **Bulk apply rules (updated):**
@@ -214,8 +215,10 @@ Choose **Japanese**, **Korean**, or **English**. All screens update immediately.
 | Settings tab | Display language, attendance CSV export, email with attachments |
 | APK download | Pre-built APK available at `dist/출퇴근관리-v1.0.0.apk` in the repository |
 | Holiday logic | `src/utils/japaneseHolidays.ts` calculates Japan public holidays per year |
-| App layout | **Cute top banner** + **bottom tab navigation** |
+| App layout | **Cute top banner** + **link-button navigation on banner** |
+| Menu labels | Shortened to **Dates · Times · Google · History · Settings** |
 | Off-day display | Gray background on weekend/holiday cards in Commute Times screen |
+| Reset times | **Reset** button on Commute Times title clears times to **00:00** |
 
 ---
 

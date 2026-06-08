@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Alert } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Alert, TouchableOpacity } from 'react-native';
 import { YearMonthPicker } from '../components/YearMonthPicker';
 import { TimeInput } from '../components/TimeInput';
 import { Button } from '../components/Button';
@@ -166,6 +166,26 @@ export function CommuteTimeScreen() {
     Alert.alert(tr('alertDone'), tr('alertBulkClockOut', { month, count: bulkApplyDays.length }));
   };
 
+  const handleReset = async () => {
+    const allDays = [...new Set([...monthWorkDays, ...monthRemoteDays])];
+    const zeroTime: CommuteTime = { clockIn: '00:00', clockOut: '00:00' };
+    const nextCommute = { ...data.commuteTimes };
+    const nextDraft: Record<string, CommuteTime> = {};
+
+    allDays.forEach((dateKey) => {
+      nextCommute[dateKey] = zeroTime;
+      nextDraft[dateKey] = zeroTime;
+    });
+
+    setClockInHour('00');
+    setClockInMinute('00');
+    setClockOutHour('00');
+    setClockOutMinute('00');
+    setDraftTimes(nextDraft);
+    setPreview([]);
+    await setCommuteTimes(nextCommute);
+  };
+
   const handleSave = async () => {
     const merged = { ...data.commuteTimes, ...draftTimes };
     const workSet = new Set(monthWorkDays);
@@ -188,7 +208,12 @@ export function CommuteTimeScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>{tr('commuteTitle')}</Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.title}>{tr('commuteTitle')}</Text>
+        <TouchableOpacity onPress={handleReset} style={styles.resetBtn} activeOpacity={0.7}>
+          <Text style={styles.resetBtnText}>{tr('resetAll')}</Text>
+        </TouchableOpacity>
+      </View>
 
       <YearMonthPicker year={year} month={month} onYearChange={setYear} onMonthChange={setMonth} />
 
@@ -295,7 +320,23 @@ export function CommuteTimeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   content: { padding: 16, paddingBottom: 32 },
-  title: { fontSize: 20, fontWeight: '700', marginBottom: 16, color: '#222' },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    gap: 8,
+  },
+  title: { flex: 1, fontSize: 20, fontWeight: '700', color: '#222' },
+  resetBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: '#f5f5f5',
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  resetBtnText: { fontSize: 13, fontWeight: '600', color: '#555' },
   dayPicker: { marginBottom: 16 },
   label: { fontSize: 14, fontWeight: '600', marginBottom: 4, color: '#333' },
   bulkSection: {
