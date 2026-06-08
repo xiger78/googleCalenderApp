@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { MonthNavigator } from '../components/MonthNavigator';
+import { YearMonthSelector } from '../components/YearMonthSelector';
 import { TimeInput } from '../components/TimeInput';
 import { TimeRangeInput } from '../components/TimeRangeInput';
 import { Button } from '../components/Button';
@@ -23,9 +23,10 @@ import {
   parseTime,
   formatDateKey,
   isWeekend,
+  formatDateWithTypeLabel,
 } from '../utils/dateUtils';
 import { getBulkApplyDateKeys, isNonWorkingDay } from '../utils/japaneseHolidays';
-import { getWeekdays, getWeekdaysFull } from '../i18n/translations';
+import { getWeekdays } from '../i18n/translations';
 import { CommuteTime } from '../types';
 
 type PreviewItem = {
@@ -44,7 +45,6 @@ function DayTimeRow({
   onUpdateTime,
   tr,
   weekdays,
-  weekdaysFull,
 }: {
   dateKey: string;
   isOffice: boolean;
@@ -59,11 +59,7 @@ function DayTimeRow({
   ) => void;
   tr: (key: string, params?: Record<string, string | number>) => string;
   weekdays: string[];
-  weekdaysFull: string[];
 }) {
-  const dow = new Date(dateKey).getDay();
-  const weekdayChar = weekdays[dow];
-  const weekdayFull = weekdaysFull[dow];
   const clockIn = parseTime(times.clockIn);
   const clockOut = parseTime(times.clockOut);
 
@@ -75,46 +71,12 @@ function DayTimeRow({
         ? styles.officeRow
         : styles.remoteRow;
 
-  const iconStyle = isJpHoliday
-    ? styles.holidayIcon
-    : isOffDay
-      ? styles.offDayIcon
-      : isOffice
-        ? styles.officeIcon
-        : styles.remoteIcon;
-
-  const dayTitle = isJpHoliday
-    ? tr('holidayLabel')
-    : isOffDay
-      ? weekdayFull
-      : `${weekdayFull} (${isOffice ? tr('officeShort') : tr('remoteShort')})`;
+  const typeLabel = isOffice ? tr('office') : tr('remote');
+  const dateLabel = formatDateWithTypeLabel(dateKey, weekdays, typeLabel);
 
   return (
     <View style={[styles.dayCard, rowStyle]}>
-      <View style={styles.dayHeader}>
-        <View style={styles.dayHeaderLeft}>
-          <View style={[styles.dayIconCircle, iconStyle]}>
-            {isOffDay ? (
-              <MaterialCommunityIcons
-                name="calendar-remove"
-                size={18}
-                color={isJpHoliday ? '#C62828' : '#757575'}
-              />
-            ) : (
-              <Text style={[styles.dayIconText, isOffice ? styles.officeIconText : styles.remoteIconText]}>
-                {weekdayChar}
-              </Text>
-            )}
-          </View>
-          <Text style={styles.dayTitle}>{dayTitle}</Text>
-        </View>
-        {isOffDay && (
-          <View style={styles.holidayCheck}>
-            <MaterialCommunityIcons name="checkbox-marked" size={18} color="#757575" />
-            <Text style={styles.holidayCheckText}>{tr('setAsHoliday')}</Text>
-          </View>
-        )}
-      </View>
+      <Text style={styles.dateLabel}>{dateLabel}</Text>
       <TimeRangeInput
         compact
         clockInHour={clockIn.hour || '00'}
@@ -150,7 +112,6 @@ export function CommuteTimeScreen() {
   const bulkApplyDays = getBulkApplyDateKeys(year, month);
   const daysInMonth = getDaysInMonth(year, month);
   const weekdays = getWeekdays(language);
-  const weekdaysFull = getWeekdaysFull(language);
 
   const getTimeForDate = (dateKey: string): CommuteTime => {
     return draftTimes[dateKey] ?? data.commuteTimes[dateKey] ?? { clockIn: '', clockOut: '' };
@@ -269,7 +230,7 @@ export function CommuteTimeScreen() {
         </TouchableOpacity>
       </View>
 
-      <MonthNavigator year={year} month={month} onYearChange={setYear} onMonthChange={setMonth} />
+      <YearMonthSelector year={year} month={month} onYearChange={setYear} onMonthChange={setMonth} />
 
       <View style={styles.bulkBox}>
         <View style={styles.bulkHeader}>
@@ -321,7 +282,6 @@ export function CommuteTimeScreen() {
               onUpdateTime={updateTimePart}
               tr={tr}
               weekdays={weekdays}
-              weekdaysFull={weekdaysFull}
             />
           );
         })}
@@ -409,30 +369,7 @@ const styles = StyleSheet.create({
   remoteRow: { backgroundColor: '#E3F2FD', borderColor: '#BBDEFB' },
   offDayRow: { backgroundColor: '#F5F5F5', borderColor: '#E0E0E0' },
   holidayRow: { backgroundColor: '#FCE4EC', borderColor: '#F8BBD0' },
-  dayHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  dayHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
-  dayIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  officeIcon: { backgroundColor: '#C8E6C9' },
-  remoteIcon: { backgroundColor: '#BBDEFB' },
-  offDayIcon: { backgroundColor: '#EEEEEE' },
-  holidayIcon: { backgroundColor: '#FFCDD2' },
-  dayIconText: { fontSize: 15, fontWeight: '700' },
-  officeIconText: { color: '#2E7D32' },
-  remoteIconText: { color: '#1565C0' },
-  dayTitle: { fontSize: 14, fontWeight: '700', color: '#333', flex: 1 },
-  holidayCheck: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  holidayCheckText: { fontSize: 10, color: '#757575', fontWeight: '600' },
+  dateLabel: { fontSize: 14, fontWeight: '700', color: '#333' },
   saveRow: { marginTop: 20 },
   preview: { marginTop: 24, padding: 16, backgroundColor: '#f3e5f5', borderRadius: 12 },
   previewTitle: { fontSize: 15, fontWeight: '600', marginBottom: 10, color: '#6a1b9a' },

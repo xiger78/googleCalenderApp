@@ -66,6 +66,14 @@ export function formatSlashDateWithWeekday(
   return `${year}/${m}/${d}(${dow})`;
 }
 
+export function formatDateWithTypeLabel(
+  dateKey: string,
+  weekdays: string[],
+  typeLabel: string
+): string {
+  return `${formatSlashDateWithWeekday(dateKey, weekdays)}:${typeLabel}`;
+}
+
 export function isWeekend(dateKey: string): boolean {
   const dow = new Date(dateKey).getDay();
   return dow === 0 || dow === 6;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { MonthNavigator } from '../components/MonthNavigator';
+import { YearMonthSelector } from '../components/YearMonthSelector';
 import { CalendarGrid } from '../components/CalendarGrid';
 import { useWorkDataContext } from '../context/WorkDataContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -20,7 +20,7 @@ export function WorkDateScreen() {
       <View style={styles.card}>
         <Text style={styles.centerTitle}>{tr('workDateTitle')}</Text>
 
-        <MonthNavigator
+        <YearMonthSelector
           year={year}
           month={month}
           onYearChange={setYear}
