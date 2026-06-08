@@ -30,3 +30,17 @@ export function getWorkHoursParenthetical(
   const decimal = formatWorkHoursDecimal(calcWorkMinutes(clockIn, clockOut, lunchMinutes));
   return decimal ? ` (${decimal})` : '';
 }
+
+export function sumWorkMinutes(
+  entries: { clockIn: string; clockOut: string }[],
+  lunchMinutes = 0
+): number {
+  return entries.reduce((sum, { clockIn, clockOut }) => {
+    const mins = calcWorkMinutes(clockIn, clockOut, lunchMinutes);
+    return sum + (mins ?? 0);
+  }, 0);
+}
+
+export function formatTotalWorkHoursDecimal(totalMinutes: number): string {
+  return (totalMinutes / 60).toFixed(1);
+}

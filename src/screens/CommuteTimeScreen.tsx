@@ -30,7 +30,11 @@ import {
   getCommuteDayType,
 } from '../utils/commuteDayType';
 import { getWeekdays, TranslationKey } from '../i18n/translations';
-import { getWorkHoursParenthetical } from '../utils/workDuration';
+import {
+  formatTotalWorkHoursDecimal,
+  getWorkHoursParenthetical,
+  sumWorkMinutes,
+} from '../utils/workDuration';
 import { CommuteTime, HolidayWorkType } from '../types';
 
 type PreviewItem = {
@@ -135,6 +139,7 @@ export function CommuteTimeScreen() {
 
   const [draftTimes, setDraftTimes] = useState<Record<string, CommuteTime>>({});
   const [preview, setPreview] = useState<PreviewItem[]>([]);
+  const [previewTotalHours, setPreviewTotalHours] = useState<string | null>(null);
 
   const { data, setCommuteTimes, setHolidayWorkType } = useWorkDataContext();
   const { language, lunchBreakMinutes, tr } = useLanguage();
@@ -221,18 +226,21 @@ export function CommuteTimeScreen() {
     setClockOutMinute('00');
     setDraftTimes(nextDraft);
     setPreview([]);
+    setPreviewTotalHours(null);
     await setCommuteTimes(nextCommute);
   };
 
   const handleSave = async () => {
     const merged = { ...data.commuteTimes, ...draftTimes };
 
+    const timeEntries: { clockIn: string; clockOut: string }[] = [];
     const savedList: PreviewItem[] = Array.from({ length: daysInMonth }, (_, i) => {
       const dateKey = formatDateKey(year, month, i + 1);
       const times = merged[dateKey];
       if (!times?.clockIn && !times?.clockOut) return null;
       const clockIn = times.clockIn ?? '--:--';
       const clockOut = times.clockOut ?? '--:--';
+      timeEntries.push({ clockIn, clockOut });
       const dateLabel = formatSlashDateWithWeekday(dateKey, weekdays);
       const workHours = getWorkHoursParenthetical(clockIn, clockOut, lunchBreakMinutes);
       return {
@@ -241,8 +249,10 @@ export function CommuteTimeScreen() {
       };
     }).filter(Boolean) as PreviewItem[];
 
+    const totalMinutes = sumWorkMinutes(timeEntries, lunchBreakMinutes);
     await setCommuteTimes(merged);
     setPreview(savedList);
+    setPreviewTotalHours(formatTotalWorkHoursDecimal(totalMinutes));
     setDraftTimes({});
     Alert.alert(tr('alertSaved'), tr('alertCommuteSaved'));
   };
@@ -329,6 +339,11 @@ export function CommuteTimeScreen() {
       {preview.length > 0 && (
         <View style={styles.preview}>
           <Text style={styles.previewTitle}>{tr('previewTitle')}</Text>
+          {previewTotalHours !== null && (
+            <Text style={styles.previewTotal}>
+              {tr('totalWorkHoursLine', { hours: previewTotalHours })}
+            </Text>
+          )}
           {preview.map((item) => (
             <Text key={item.dateKey} style={styles.previewItem}>
               {item.line}
@@ -399,7 +414,14 @@ const styles = StyleSheet.create({
   dateLabel: { fontSize: 14, fontWeight: '700', color: '#333' },
   saveRow: { marginTop: 20 },
   preview: { marginTop: 24, padding: 16, backgroundColor: '#f3e5f5', borderRadius: 12 },
-  previewTitle: { fontSize: 15, fontWeight: '600', marginBottom: 10, color: '#6a1b9a' },
+  previewTitle: { fontSize: 15, fontWeight: '600', marginBottom: 8, color: '#6a1b9a' },
+  previewTotal: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#6a1b9a',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
   previewItem: {
     fontSize: 14,
     color: '#333',

@@ -133,9 +133,15 @@ Enter clock-in and clock-out times for each day of the selected month.
 - Tap **Save** to store data and show a preview list below the button
 
 **Save preview (same format as Attendance History):**
+- **First line:** `[Work hours:total]` — sum of daily work hours for the month (same decimal format)
 - Each saved row: `YYYY/MM/DD(weekday) HH:MM-HH:MM (work hours)`, center-aligned
 - Work hours = clock-out − clock-in − **lunch break** (from Settings), shown in parentheses as a decimal (e.g. `9.0` for 9 hours, `9.5` for 9.5 hours)
-- Example: `2026/06/03(Wed) 09:00-18:00 (8.0)`
+- Example:
+```
+[Work hours:160.0]
+2026/06/03(Wed) 09:00-18:00 (8.0)
+2026/06/04(Thu) 09:00-18:00 (8.0)
+```
 
 **Day labels and card colors:**
 - Each row shows `YYYY/MM/DD(weekday):type` (e.g. `2026/06/03(Wed):Office`)
@@ -177,9 +183,15 @@ View monthly attendance records.
 **How to use:**
 - Select year and month with dropdown pickers
 - The list updates automatically for the selected month
+- **First line:** `[Work hours:total]` — sum of daily work hours for all days in the month
 - Each row shows `YYYY/MM/DD(weekday) HH:MM-HH:MM (work hours)`, **center-aligned**
 - Work hours in parentheses use the same decimal format as the save preview (lunch break excluded)
-- Example: `2026/06/03(Wed) 09:00-18:00 (8.0)`
+- Example:
+```
+[Work hours:160.0]
+2026/06/03(Wed) 09:00-18:00 (8.0)
+2026/06/04(Thu) 09:00-18:00 (8.0)
+```
 - Card colors match Commute Times: green = office, blue = remote, pink = holiday
 
 ![Attendance History](docs/images/en/screen-attendance-history.png)
@@ -227,6 +239,7 @@ Choose **Japanese**, **Korean**, or **English**. All screens update immediately.
 | Bulk apply button | **Apply** button is **full width**, same as **Save** |
 | History layout | Date lines are **center-aligned**; colors match commute screen |
 | Work hours display | History and save preview show **(9.0)** / **(9.5)** style hours after clock-in/out (lunch break excluded) |
+| Total work hours | First line **`[Work hours:total]`** sums daily work hours on History and save preview |
 | Save preview format | Matches **Attendance History** line format (`YYYY/MM/DD(weekday) HH:MM-HH:MM (hours)`) |
 | Bulk time entry | Excludes **weekends** and **Japanese holidays** from bulk apply |
 | Time input UI | Per-day editing uses compact **HH:MM** inputs |
