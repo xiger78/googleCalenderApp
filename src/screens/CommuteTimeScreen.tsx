@@ -14,7 +14,6 @@ import { TimeRangeInput } from '../components/TimeRangeInput';
 import { Button } from '../components/Button';
 import { useWorkDataContext } from '../context/WorkDataContext';
 import { useLanguage } from '../context/LanguageContext';
-import { getWorkDaysInMonth } from '../utils/storage';
 import {
   formatTime,
   getDaysInMonth,
@@ -22,12 +21,16 @@ import {
   formatYYYYMMDD,
   parseTime,
   formatDateKey,
-  isWeekend,
   formatDateWithTypeLabel,
 } from '../utils/dateUtils';
-import { getBulkApplyDateKeys, isNonWorkingDay } from '../utils/japaneseHolidays';
-import { getWeekdays } from '../i18n/translations';
-import { CommuteTime } from '../types';
+import { getBulkApplyDateKeys } from '../utils/japaneseHolidays';
+import {
+  canChangeHolidayWorkType,
+  CommuteDayType,
+  getCommuteDayType,
+} from '../utils/commuteDayType';
+import { getWeekdays, TranslationKey } from '../i18n/translations';
+import { CommuteTime, HolidayWorkType } from '../types';
 
 type PreviewItem = {
   date: string;
@@ -36,20 +39,34 @@ type PreviewItem = {
   clockOut: string;
 };
 
+function typeLabelFor(
+  tr: (key: TranslationKey, params?: Record<string, string | number>) => string,
+  dayType: CommuteDayType
+): string {
+  if (dayType === 'office') return tr('office');
+  if (dayType === 'remote') return tr('remote');
+  return tr('holidayLabel');
+}
+
+function rowStyleFor(dayType: CommuteDayType) {
+  if (dayType === 'office') return styles.officeRow;
+  if (dayType === 'remote') return styles.remoteRow;
+  return styles.holidayRow;
+}
+
 function DayTimeRow({
   dateKey,
-  isOffice,
-  isOffDay,
-  isJpHoliday,
+  dayType,
+  canChangeType,
   times,
   onUpdateTime,
+  onChangeWorkType,
   tr,
   weekdays,
 }: {
   dateKey: string;
-  isOffice: boolean;
-  isOffDay: boolean;
-  isJpHoliday: boolean;
+  dayType: CommuteDayType;
+  canChangeType: boolean;
   times: CommuteTime;
   onUpdateTime: (
     dateKey: string,
@@ -57,26 +74,41 @@ function DayTimeRow({
     part: 'hour' | 'minute',
     value: string
   ) => void;
-  tr: (key: string, params?: Record<string, string | number>) => string;
+  onChangeWorkType: (dateKey: string, workType: HolidayWorkType) => void;
+  tr: (key: TranslationKey, params?: Record<string, string | number>) => string;
   weekdays: string[];
 }) {
   const clockIn = parseTime(times.clockIn);
   const clockOut = parseTime(times.clockOut);
-
-  const rowStyle = isJpHoliday
-    ? styles.holidayRow
-    : isOffDay
-      ? styles.offDayRow
-      : isOffice
-        ? styles.officeRow
-        : styles.remoteRow;
-
-  const typeLabel = isOffice ? tr('office') : tr('remote');
+  const typeLabel = typeLabelFor(tr, dayType);
   const dateLabel = formatDateWithTypeLabel(dateKey, weekdays, typeLabel);
 
+  const openTypePicker = () => {
+    Alert.alert(tr('holidayWorkTypeTitle'), tr('holidayWorkTypeDesc'), [
+      {
+        text: tr('office'),
+        onPress: () => onChangeWorkType(dateKey, 'office'),
+      },
+      {
+        text: tr('remote'),
+        onPress: () => onChangeWorkType(dateKey, 'remote'),
+      },
+      { text: tr('alertCancel'), style: 'cancel' },
+    ]);
+  };
+
   return (
-    <View style={[styles.dayCard, rowStyle]}>
-      <Text style={styles.dateLabel}>{dateLabel}</Text>
+    <View style={[styles.dayCard, rowStyleFor(dayType)]}>
+      {canChangeType ? (
+        <TouchableOpacity onPress={openTypePicker} activeOpacity={0.7}>
+          <View style={styles.dateLabelRow}>
+            <Text style={styles.dateLabel}>{dateLabel}</Text>
+            <MaterialCommunityIcons name="chevron-down" size={18} color="#555" />
+          </View>
+        </TouchableOpacity>
+      ) : (
+        <Text style={styles.dateLabel}>{dateLabel}</Text>
+      )}
       <TimeRangeInput
         compact
         clockInHour={clockIn.hour || '00'}
@@ -105,10 +137,8 @@ export function CommuteTimeScreen() {
   const [draftTimes, setDraftTimes] = useState<Record<string, CommuteTime>>({});
   const [preview, setPreview] = useState<PreviewItem[]>([]);
 
-  const { data, setCommuteTimes } = useWorkDataContext();
+  const { data, setCommuteTimes, setHolidayWorkType } = useWorkDataContext();
   const { language, tr } = useLanguage();
-  const monthWorkDays = getWorkDaysInMonth(data.workDays, year, month);
-  const workSet = new Set(monthWorkDays);
   const bulkApplyDays = getBulkApplyDateKeys(year, month);
   const daysInMonth = getDaysInMonth(year, month);
   const weekdays = getWeekdays(language);
@@ -138,6 +168,10 @@ export function CommuteTimeScreen() {
       return;
     }
     updateDraft(dateKey, field, formatTime(hour || '0', minute || '0'));
+  };
+
+  const handleChangeWorkType = async (dateKey: string, workType: HolidayWorkType) => {
+    await setHolidayWorkType(dateKey, workType);
   };
 
   const applyBulk = () => {
@@ -196,12 +230,12 @@ export function CommuteTimeScreen() {
 
     const savedList: PreviewItem[] = Array.from({ length: daysInMonth }, (_, i) => {
       const dateKey = formatDateKey(year, month, i + 1);
-      const isOffice = workSet.has(dateKey);
+      const dayType = getCommuteDayType(dateKey, data.workDays, data.holidayWorkTypes);
       const times = merged[dateKey];
       if (!times?.clockIn && !times?.clockOut) return null;
       return {
         date: formatYYYYMMDD(dateKey),
-        type: isOffice ? tr('office') : tr('remote'),
+        type: typeLabelFor(tr, dayType),
         clockIn: times.clockIn ?? '-',
         clockOut: times.clockOut ?? '-',
       };
@@ -271,17 +305,16 @@ export function CommuteTimeScreen() {
 
       <View style={styles.dayList}>
         {monthDays.map((dateKey) => {
-          const offDay = isNonWorkingDay(dateKey);
-          const jpHoliday = offDay && !isWeekend(dateKey);
+          const dayType = getCommuteDayType(dateKey, data.workDays, data.holidayWorkTypes);
           return (
             <DayTimeRow
               key={dateKey}
               dateKey={dateKey}
-              isOffice={workSet.has(dateKey)}
-              isOffDay={offDay}
-              isJpHoliday={jpHoliday}
+              dayType={dayType}
+              canChangeType={canChangeHolidayWorkType(dateKey, data.workDays)}
               times={getTimeForDate(dateKey)}
               onUpdateTime={updateTimePart}
+              onChangeWorkType={handleChangeWorkType}
               tr={tr}
               weekdays={weekdays}
             />
@@ -369,8 +402,8 @@ const styles = StyleSheet.create({
   },
   officeRow: { backgroundColor: '#F1F8E9', borderColor: '#C8E6C9' },
   remoteRow: { backgroundColor: '#E3F2FD', borderColor: '#BBDEFB' },
-  offDayRow: { backgroundColor: '#F5F5F5', borderColor: '#E0E0E0' },
   holidayRow: { backgroundColor: '#FCE4EC', borderColor: '#F8BBD0' },
+  dateLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   dateLabel: { fontSize: 14, fontWeight: '700', color: '#333' },
   saveRow: { marginTop: 20 },
   preview: { marginTop: 24, padding: 16, backgroundColor: '#f3e5f5', borderRadius: 12 },

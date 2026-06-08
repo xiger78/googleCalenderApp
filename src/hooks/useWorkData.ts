@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
-import { WorkData } from '../types';
+import { HolidayWorkType, WorkData } from '../types';
 import { loadWorkData, saveWorkData } from '../utils/storage';
 
 export function useWorkData() {
-  const [data, setData] = useState<WorkData>({ workDays: [], commuteTimes: {} });
+  const [data, setData] = useState<WorkData>({
+    workDays: [],
+    commuteTimes: {},
+    holidayWorkTypes: {},
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,10 +29,12 @@ export function useWorkData() {
         ? data.workDays.filter((d) => d !== dateKey)
         : [...data.workDays, dateKey].sort();
       const commuteTimes = { ...data.commuteTimes };
+      const holidayWorkTypes = { ...data.holidayWorkTypes };
       if (exists) {
         delete commuteTimes[dateKey];
+        delete holidayWorkTypes[dateKey];
       }
-      await persist({ workDays, commuteTimes });
+      await persist({ ...data, workDays, commuteTimes, holidayWorkTypes });
     },
     [data, persist]
   );
@@ -36,6 +42,16 @@ export function useWorkData() {
   const setCommuteTimes = useCallback(
     async (commuteTimes: WorkData['commuteTimes']) => {
       await persist({ ...data, commuteTimes });
+    },
+    [data, persist]
+  );
+
+  const setHolidayWorkType = useCallback(
+    async (dateKey: string, workType: HolidayWorkType) => {
+      await persist({
+        ...data,
+        holidayWorkTypes: { ...data.holidayWorkTypes, [dateKey]: workType },
+      });
     },
     [data, persist]
   );
@@ -50,6 +66,7 @@ export function useWorkData() {
     loading,
     toggleWorkDay,
     setCommuteTimes,
+    setHolidayWorkType,
     isWorkDay,
     persist,
   };

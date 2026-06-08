@@ -9,14 +9,13 @@ import {
   formatDateKey,
   formatSlashDateWithWeekday,
 } from '../utils/dateUtils';
-import { isNonWorkingDay } from '../utils/japaneseHolidays';
+import { getCommuteDayType } from '../utils/commuteDayType';
 import { getWeekdays } from '../i18n/translations';
 
 type HistoryItem = {
   dateKey: string;
   line: string;
-  isOffice: boolean;
-  isOffDay: boolean;
+  dayType: 'office' | 'remote' | 'holiday';
 };
 
 export function AttendanceHistoryScreen() {
@@ -30,21 +29,18 @@ export function AttendanceHistoryScreen() {
 
   const loadHistory = () => {
     const daysInMonth = getDaysInMonth(year, month);
-    const monthPrefix = `${year}-${String(month).padStart(2, '0')}`;
-    const workDaySet = new Set(data.workDays.filter((d) => d.startsWith(monthPrefix)));
-
     const result = Array.from({ length: daysInMonth }, (_, i) => {
       const dateKey = formatDateKey(year, month, i + 1);
       const commute = data.commuteTimes[dateKey];
       const clockIn = commute?.clockIn || '--:--';
       const clockOut = commute?.clockOut || '--:--';
       const dateLabel = formatSlashDateWithWeekday(dateKey, weekdays);
+      const dayType = getCommuteDayType(dateKey, data.workDays, data.holidayWorkTypes);
 
       return {
         dateKey,
         line: `${dateLabel} ${clockIn}-${clockOut}`,
-        isOffice: workDaySet.has(dateKey),
-        isOffDay: isNonWorkingDay(dateKey),
+        dayType,
       };
     });
 
@@ -53,7 +49,7 @@ export function AttendanceHistoryScreen() {
 
   useEffect(() => {
     loadHistory();
-  }, [year, month, data.workDays, data.commuteTimes, language]);
+  }, [year, month, data.workDays, data.commuteTimes, data.holidayWorkTypes, language]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -67,9 +63,9 @@ export function AttendanceHistoryScreen() {
             key={item.dateKey}
             style={[
               styles.listRow,
-              item.isOffDay
-                ? styles.offDayRow
-                : item.isOffice
+              item.dayType === 'holiday'
+                ? styles.holidayRow
+                : item.dayType === 'office'
                   ? styles.officeRow
                   : styles.remoteRow,
             ]}
@@ -95,6 +91,6 @@ const styles = StyleSheet.create({
   },
   officeRow: { backgroundColor: '#F1F8E9', borderColor: '#A5D6A7' },
   remoteRow: { backgroundColor: '#E3F2FD', borderColor: '#90CAF9' },
-  offDayRow: { backgroundColor: '#EEEEEE', borderColor: '#BDBDBD' },
+  holidayRow: { backgroundColor: '#FCE4EC', borderColor: '#F8BBD0' },
   listLine: { fontSize: 14, fontWeight: '500', color: '#333', lineHeight: 20 },
 });

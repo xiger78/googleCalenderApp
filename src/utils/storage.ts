@@ -5,6 +5,7 @@ import { getMonthDateKeys } from './dateUtils';
 const defaultData: WorkData = {
   workDays: [],
   commuteTimes: {},
+  holidayWorkTypes: {},
 };
 
 export async function loadWorkData(): Promise<WorkData> {
@@ -15,6 +16,7 @@ export async function loadWorkData(): Promise<WorkData> {
     return {
       workDays: parsed.workDays ?? [],
       commuteTimes: parsed.commuteTimes ?? {},
+      holidayWorkTypes: parsed.holidayWorkTypes ?? {},
     };
   } catch {
     return { ...defaultData };
