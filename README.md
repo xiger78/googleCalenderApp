@@ -80,6 +80,12 @@ npm run build:apk
 # Output: dist/출퇴근관리-v1.0.0.apk
 ```
 
+A pre-built APK is also committed in the repository:
+
+```
+dist/출퇴근관리-v1.0.0.apk
+```
+
 ---
 
 ## Supported Android Versions
@@ -120,10 +126,20 @@ Enter clock-in and clock-out times for office and remote days.
 
 **How to use:**
 - Select year, month, and day
-- Enter clock-in / clock-out time (HH hours MM minutes)
-- Tap **Apply All** to apply times to all days in the month (office + remote)
-- Manually edit each office day and remote day individually
+- Enter clock-in / clock-out time using **HH hours MM minutes** pickers
+- Tap **Apply All** for clock-in or clock-out to bulk-apply to eligible weekdays in the month
+- Manually edit each office day and remote day individually (same time picker UI)
 - Tap **Save** to store data and preview the saved list
+
+**Bulk apply rules (updated):**
+- Applies to both **office and remote** days in the selected month
+- **Excludes Saturdays and Sundays**
+- **Excludes Japanese national holidays** (祝日), including:
+  - Fixed holidays (New Year's Day, National Foundation Day, Emperor's Birthday, etc.)
+  - Happy Monday holidays (Marine Day, Respect for the Aged Day, Sports Day)
+  - Vernal/Autumnal Equinox days
+  - Substitute holidays (振替休日) and Citizens' holidays (国民の休日)
+- The screen shows the number of eligible days (e.g. `Excludes Sat/Sun & JP holidays · N days`)
 
 ![Commute Times](docs/images/en/screen-commute-time.png)
 
@@ -187,6 +203,19 @@ Choose **Japanese**, **Korean**, or **English**. All screens update immediately.
 
 ---
 
+## Feature Updates
+
+| Item | Description |
+|------|-------------|
+| Default language | **Japanese** on first launch (changeable in Settings) |
+| Bulk time entry | Excludes **weekends** and **Japanese holidays** from bulk apply |
+| Time input UI | Per-day editing uses **HH:MM picker** instead of free-text fields |
+| Settings tab | Display language, attendance CSV export, email with attachments |
+| APK download | Pre-built APK available at `dist/출퇴근관리-v1.0.0.apk` in the repository |
+| Holiday logic | `src/utils/japaneseHolidays.ts` calculates Japan public holidays per year |
+
+---
+
 ## Project Structure
 
 ```
@@ -197,7 +226,7 @@ googleCalenderApp/
 │   ├── components/            # Shared UI components
 │   ├── context/               # Data & language context
 │   ├── i18n/                  # Translations (ja/ko/en)
-│   ├── utils/                 # Date, storage, CSV utilities
+│   ├── utils/                 # Date, storage, CSV, Japanese holiday utilities
 │   └── services/              # Google Calendar API
 ├── docs/images/
 │   ├── en/                    # English screen captures

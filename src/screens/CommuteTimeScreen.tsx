@@ -10,11 +10,11 @@ import { getWorkDaysInMonth, getRemoteDaysInMonth } from '../utils/storage';
 import {
   formatTime,
   getDaysInMonth,
-  getMonthDateKeys,
   isValidTime,
   formatYYYYMMDD,
   parseTime,
 } from '../utils/dateUtils';
+import { getBulkApplyDateKeys } from '../utils/japaneseHolidays';
 import { CommuteTime } from '../types';
 
 type PreviewItem = {
@@ -90,7 +90,7 @@ export function CommuteTimeScreen() {
   const { tr } = useLanguage();
   const monthWorkDays = getWorkDaysInMonth(data.workDays, year, month);
   const monthRemoteDays = getRemoteDaysInMonth(data.workDays, year, month);
-  const monthAllDays = getMonthDateKeys(year, month);
+  const bulkApplyDays = getBulkApplyDateKeys(year, month);
   const daysInMonth = getDaysInMonth(year, month);
 
   const getTimeForDate = (dateKey: string): CommuteTime => {
@@ -127,12 +127,16 @@ export function CommuteTimeScreen() {
     }
     const time = formatTime(clockInHour, clockInMinute);
     const next = { ...draftTimes };
-    monthAllDays.forEach((dateKey) => {
+    if (bulkApplyDays.length === 0) {
+      Alert.alert(tr('alertNotice'), tr('alertBulkNoDays'));
+      return;
+    }
+    bulkApplyDays.forEach((dateKey) => {
       const current = getTimeForDate(dateKey);
       next[dateKey] = { ...current, clockIn: time };
     });
     setDraftTimes(next);
-    Alert.alert(tr('alertDone'), tr('alertBulkClockIn', { month, count: monthAllDays.length }));
+    Alert.alert(tr('alertDone'), tr('alertBulkClockIn', { month, count: bulkApplyDays.length }));
   };
 
   const applyBulkClockOut = () => {
@@ -142,12 +146,16 @@ export function CommuteTimeScreen() {
     }
     const time = formatTime(clockOutHour, clockOutMinute);
     const next = { ...draftTimes };
-    monthAllDays.forEach((dateKey) => {
+    if (bulkApplyDays.length === 0) {
+      Alert.alert(tr('alertNotice'), tr('alertBulkNoDays'));
+      return;
+    }
+    bulkApplyDays.forEach((dateKey) => {
       const current = getTimeForDate(dateKey);
       next[dateKey] = { ...current, clockOut: time };
     });
     setDraftTimes(next);
-    Alert.alert(tr('alertDone'), tr('alertBulkClockOut', { month, count: monthAllDays.length }));
+    Alert.alert(tr('alertDone'), tr('alertBulkClockOut', { month, count: bulkApplyDays.length }));
   };
 
   const handleSave = async () => {
@@ -192,6 +200,7 @@ export function CommuteTimeScreen() {
         <Text style={styles.bulkGroupTitle}>
           {tr('bulkTitle', { office: monthWorkDays.length, remote: monthRemoteDays.length })}
         </Text>
+        <Text style={styles.bulkNote}>{tr('bulkExcludeNote', { count: bulkApplyDays.length })}</Text>
         <View style={styles.bulkRow}>
           <View style={styles.bulkInput}>
             <TimeInput
@@ -286,7 +295,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     gap: 4,
   },
-  bulkGroupTitle: { fontSize: 15, fontWeight: '700', marginBottom: 8, color: '#333' },
+  bulkGroupTitle: { fontSize: 15, fontWeight: '700', marginBottom: 4, color: '#333' },
+  bulkNote: { fontSize: 12, color: '#666', marginBottom: 8 },
   bulkRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginBottom: 8 },
   bulkInput: { flex: 1 },
   sectionTitle: { fontSize: 16, fontWeight: '600', marginBottom: 12, color: '#333' },
