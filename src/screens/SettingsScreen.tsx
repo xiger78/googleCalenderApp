@@ -234,7 +234,7 @@ export function SettingsScreen() {
           onYearChange={setReportYear}
           onMonthChange={setReportMonth}
         />
-        <Button title={tr('export')} onPress={handleExport} loading={exporting} />
+        <Button title={tr('export')} onPress={handleExport} loading={exporting} fullWidth />
       </SettingsCard>
 
       <SettingsCard

@@ -12,11 +12,20 @@ const discovery = {
   revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
 };
 
-const SCOPES = ['https://www.googleapis.com/auth/calendar.events'];
+const SCOPES = [
+  'https://www.googleapis.com/auth/calendar.events',
+  'https://www.googleapis.com/auth/userinfo.email',
+  'openid',
+];
 
 export interface CalendarEventInput {
   dateKey: string;
   commute?: CommuteTime;
+}
+
+export interface GoogleAuthSession {
+  accessToken: string;
+  email: string;
 }
 
 function toRFC3339(dateKey: string, time: string): { start: string; end: string } {
@@ -31,7 +40,19 @@ function toRFC3339(dateKey: string, time: string): { start: string; end: string 
   };
 }
 
-export async function authenticateGoogle(): Promise<string | null> {
+export async function fetchGoogleUserEmail(accessToken: string): Promise<string> {
+  const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) {
+    throw new Error('Google 계정 정보를 가져오지 못했습니다.');
+  }
+  const data = (await res.json()) as { email?: string };
+  return data.email ?? '';
+}
+
+/** 기기에 로그인된 Google 계정 중 하나를 선택해 인증합니다. */
+export async function authenticateGoogle(): Promise<GoogleAuthSession | null> {
   if (!GOOGLE_CLIENT_ID) {
     throw new Error(
       'Google Client ID가 설정되지 않았습니다. .env 파일에 EXPO_PUBLIC_GOOGLE_CLIENT_ID를 추가해주세요.'
@@ -46,16 +67,22 @@ export async function authenticateGoogle(): Promise<string | null> {
     redirectUri,
     responseType: AuthSession.ResponseType.Token,
     usePKCE: false,
+    extraParams: {
+      prompt: 'select_account',
+    },
   });
 
   const result = await authRequest.promptAsync(discovery);
 
   if (result.type === 'success' && result.params.access_token) {
-    return result.params.access_token as string;
+    const accessToken = result.params.access_token as string;
+    const email = await fetchGoogleUserEmail(accessToken);
+    return { accessToken, email };
   }
   return null;
 }
 
+/** 선택한 Google 계정의 기본(primary) 달력에 일정을 등록합니다. */
 export async function createCalendarEvents(
   accessToken: string,
   events: CalendarEventInput[]

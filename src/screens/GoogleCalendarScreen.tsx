@@ -13,13 +13,19 @@ import {
   formatShortDateLabel,
 } from '../utils/dateUtils';
 import { getWeekdays } from '../i18n/translations';
-import { authenticateGoogle, createCalendarEvents } from '../services/googleCalendar';
+import {
+  authenticateGoogle,
+  createCalendarEvents,
+  GoogleAuthSession,
+} from '../services/googleCalendar';
 
 export function GoogleCalendarScreen() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [loading, setLoading] = useState(false);
+  const [selectingAccount, setSelectingAccount] = useState(false);
+  const [googleAccount, setGoogleAccount] = useState<GoogleAuthSession | null>(null);
   const { data } = useWorkDataContext();
   const { language, tr } = useLanguage();
   const weekdays = getWeekdays(language);
@@ -45,6 +51,22 @@ export function GoogleCalendarScreen() {
     return formatYYYYMMDD(dateKey);
   };
 
+  const handleSelectAccount = async () => {
+    setSelectingAccount(true);
+    try {
+      const session = await authenticateGoogle();
+      if (!session) {
+        Alert.alert(tr('alertCancel'), tr('alertGoogleCancel'));
+        return;
+      }
+      setGoogleAccount(session);
+    } catch (e) {
+      Alert.alert(tr('alertError'), e instanceof Error ? e.message : tr('alertGoogleError'));
+    } finally {
+      setSelectingAccount(false);
+    }
+  };
+
   const handleRegister = async () => {
     if (monthWorkDays.length === 0) {
       Alert.alert(tr('alertNotice'), tr('alertNoWorkDays'));
@@ -53,10 +75,14 @@ export function GoogleCalendarScreen() {
 
     setLoading(true);
     try {
-      const token = await authenticateGoogle();
-      if (!token) {
-        Alert.alert(tr('alertCancel'), tr('alertGoogleCancel'));
-        return;
+      let session = googleAccount;
+      if (!session) {
+        session = await authenticateGoogle();
+        if (!session) {
+          Alert.alert(tr('alertCancel'), tr('alertGoogleCancel'));
+          return;
+        }
+        setGoogleAccount(session);
       }
 
       const events = monthWorkDays.map((dateKey) => ({
@@ -64,10 +90,11 @@ export function GoogleCalendarScreen() {
         commute: data.commuteTimes[dateKey],
       }));
 
-      const result = await createCalendarEvents(token, events);
+      const result = await createCalendarEvents(session.accessToken, events);
       Alert.alert(
         tr('alertDone'),
         tr('alertGoogleDone', {
+          email: session.email,
           success: result.success,
           failed: result.failed > 0 ? tr('alertGoogleFailed', { count: result.failed }) : '',
         })
@@ -87,6 +114,29 @@ export function GoogleCalendarScreen() {
 
       <View style={styles.registerSection}>
         <MaterialCommunityIcons name="calendar-month" size={40} color="#1976D2" style={styles.calIcon} />
+
+        {googleAccount ? (
+          <View style={styles.accountBox}>
+            <MaterialCommunityIcons name="account-circle" size={20} color="#1976D2" />
+            <Text style={styles.accountEmail}>
+              {tr('googleSelectedAccount', { email: googleAccount.email })}
+            </Text>
+            <TouchableOpacity onPress={handleSelectAccount} disabled={selectingAccount}>
+              <Text style={styles.changeAccountText}>{tr('googleChangeAccount')}</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={[styles.selectAccountBtn, selectingAccount && styles.registerBtnDisabled]}
+            onPress={handleSelectAccount}
+            disabled={selectingAccount}
+            activeOpacity={0.8}
+          >
+            <MaterialCommunityIcons name="google" size={20} color="#4285F4" />
+            <Text style={styles.selectAccountText}>{tr('googleSelectAccount')}</Text>
+          </TouchableOpacity>
+        )}
+
         <TouchableOpacity
           style={[styles.registerBtn, loading && styles.registerBtnDisabled]}
           onPress={handleRegister}
@@ -149,8 +199,35 @@ export function GoogleCalendarScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   content: { padding: 16, paddingBottom: 32 },
-  registerSection: { alignItems: 'center', marginBottom: 24 },
-  calIcon: { marginBottom: 12 },
+  registerSection: { alignItems: 'center', marginBottom: 24, gap: 12 },
+  calIcon: { marginBottom: 4 },
+  selectAccountBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#90CAF9',
+    backgroundColor: '#E3F2FD',
+  },
+  selectAccountText: { fontSize: 14, fontWeight: '600', color: '#1565C0' },
+  accountBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    backgroundColor: '#f5f5f5',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    maxWidth: '100%',
+  },
+  accountEmail: { flex: 1, fontSize: 13, fontWeight: '600', color: '#333', minWidth: 160 },
+  changeAccountText: { fontSize: 12, fontWeight: '600', color: '#1976D2' },
   registerBtn: {
     flexDirection: 'row',
     alignItems: 'center',

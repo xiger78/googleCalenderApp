@@ -36,6 +36,79 @@ type PreviewItem = {
   clockOut: string;
 };
 
+function DayTimeRow({
+  dateKey,
+  isOffice,
+  offDay,
+  times,
+  onUpdateTime,
+  tr,
+  weekdays,
+}: {
+  dateKey: string;
+  isOffice: boolean;
+  offDay: boolean;
+  times: CommuteTime;
+  onUpdateTime: (
+    dateKey: string,
+    field: 'clockIn' | 'clockOut',
+    part: 'hour' | 'minute',
+    value: string
+  ) => void;
+  tr: (key: string, params?: Record<string, string | number>) => string;
+  weekdays: string[];
+}) {
+  const clockIn = parseTime(times.clockIn);
+  const clockOut = parseTime(times.clockOut);
+
+  const rowStyle = offDay
+    ? styles.offDayRow
+    : isOffice
+      ? styles.officeRow
+      : styles.remoteRow;
+
+  return (
+    <View style={[styles.dayRow, rowStyle]}>
+      <Text style={styles.dayDate}>{formatShortDateLabel(dateKey, weekdays)}</Text>
+      <View
+        style={[
+          styles.typeBadge,
+          offDay
+            ? styles.offDayBadge
+            : isOffice
+              ? styles.officeBadge
+              : styles.remoteBadge,
+        ]}
+      >
+        <MaterialCommunityIcons
+          name={offDay ? 'calendar-remove' : isOffice ? 'office-building' : 'home-outline'}
+          size={14}
+          color={offDay ? '#757575' : isOffice ? '#2E7D32' : '#1565C0'}
+        />
+        <Text
+          style={[
+            styles.typeText,
+            offDay ? styles.offDayText : isOffice ? styles.officeText : styles.remoteText,
+          ]}
+        >
+          {offDay ? tr('weekendHoliday') : isOffice ? tr('officeWork') : tr('remoteWork')}
+        </Text>
+      </View>
+      <TimeRangeInput
+        compact
+        clockInHour={clockIn.hour || '00'}
+        clockInMinute={clockIn.minute || '00'}
+        clockOutHour={clockOut.hour || '00'}
+        clockOutMinute={clockOut.minute || '00'}
+        onClockInHourChange={(v) => onUpdateTime(dateKey, 'clockIn', 'hour', v)}
+        onClockInMinuteChange={(v) => onUpdateTime(dateKey, 'clockIn', 'minute', v)}
+        onClockOutHourChange={(v) => onUpdateTime(dateKey, 'clockOut', 'hour', v)}
+        onClockOutMinuteChange={(v) => onUpdateTime(dateKey, 'clockOut', 'minute', v)}
+      />
+    </View>
+  );
+}
+
 export function CommuteTimeScreen() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -116,7 +189,7 @@ export function CommuteTimeScreen() {
   const handleReset = async () => {
     const allDays = Array.from({ length: daysInMonth }, (_, i) =>
       formatDateKey(year, month, i + 1)
-    ).filter((dateKey) => workSet.has(dateKey) || !isNonWorkingDay(dateKey));
+    );
 
     const zeroTime: CommuteTime = { clockIn: '00:00', clockOut: '00:00' };
     const nextCommute = { ...data.commuteTimes };
@@ -141,7 +214,6 @@ export function CommuteTimeScreen() {
 
     const savedList: PreviewItem[] = Array.from({ length: daysInMonth }, (_, i) => {
       const dateKey = formatDateKey(year, month, i + 1);
-      if (isNonWorkingDay(dateKey)) return null;
       const isOffice = workSet.has(dateKey);
       const times = merged[dateKey];
       if (!times?.clockIn && !times?.clockOut) return null;
@@ -215,68 +287,27 @@ export function CommuteTimeScreen() {
             onHourChange={setClockOutHour}
             onMinuteChange={setClockOutMinute}
           />
-          <Button title={tr('bulkRegister')} onPress={applyBulk} variant="success" />
+          <Button title={tr('bulkRegister')} onPress={applyBulk} variant="success" fullWidth />
         </View>
       )}
 
       <View style={styles.dayList}>
-        {monthDays.map((dateKey) => {
-          const isOffice = workSet.has(dateKey);
-          const offDay = isNonWorkingDay(dateKey);
-
-          if (offDay) {
-            return (
-              <View key={dateKey} style={[styles.dayRow, styles.offDayRow]}>
-                <Text style={styles.dayDate}>{formatShortDateLabel(dateKey, weekdays)}</Text>
-                <Text style={styles.offDayLabel}>{tr('weekendHoliday')}</Text>
-                <Text style={styles.offDayDash}>-</Text>
-              </View>
-            );
-          }
-
-          const times = getTimeForDate(dateKey);
-          const clockIn = parseTime(times.clockIn);
-          const clockOut = parseTime(times.clockOut);
-
-          return (
-            <View
-              key={dateKey}
-              style={[styles.dayRow, isOffice ? styles.officeRow : styles.remoteRow]}
-            >
-              <Text style={styles.dayDate}>{formatShortDateLabel(dateKey, weekdays)}</Text>
-              <View
-                style={[
-                  styles.typeBadge,
-                  isOffice ? styles.officeBadge : styles.remoteBadge,
-                ]}
-              >
-                <MaterialCommunityIcons
-                  name={isOffice ? 'office-building' : 'home-outline'}
-                  size={14}
-                  color={isOffice ? '#2E7D32' : '#1565C0'}
-                />
-                <Text style={[styles.typeText, isOffice ? styles.officeText : styles.remoteText]}>
-                  {isOffice ? tr('officeWork') : tr('remoteWork')}
-                </Text>
-              </View>
-              <TimeRangeInput
-                compact
-                clockInHour={clockIn.hour || '00'}
-                clockInMinute={clockIn.minute || '00'}
-                clockOutHour={clockOut.hour || '00'}
-                clockOutMinute={clockOut.minute || '00'}
-                onClockInHourChange={(v) => updateTimePart(dateKey, 'clockIn', 'hour', v)}
-                onClockInMinuteChange={(v) => updateTimePart(dateKey, 'clockIn', 'minute', v)}
-                onClockOutHourChange={(v) => updateTimePart(dateKey, 'clockOut', 'hour', v)}
-                onClockOutMinuteChange={(v) => updateTimePart(dateKey, 'clockOut', 'minute', v)}
-              />
-            </View>
-          );
-        })}
+        {monthDays.map((dateKey) => (
+          <DayTimeRow
+            key={dateKey}
+            dateKey={dateKey}
+            isOffice={workSet.has(dateKey)}
+            offDay={isNonWorkingDay(dateKey)}
+            times={getTimeForDate(dateKey)}
+            onUpdateTime={updateTimePart}
+            tr={tr}
+            weekdays={weekdays}
+          />
+        ))}
       </View>
 
       <View style={styles.saveRow}>
-        <Button title={tr('save')} onPress={handleSave} />
+        <Button title={tr('save')} onPress={handleSave} fullWidth />
       </View>
 
       {preview.length > 0 && (
@@ -345,13 +376,7 @@ const styles = StyleSheet.create({
   },
   officeRow: { backgroundColor: '#F1F8E9' },
   remoteRow: { backgroundColor: '#E3F2FD' },
-  offDayRow: {
-    backgroundColor: '#EEEEEE',
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
+  offDayRow: { backgroundColor: '#EEEEEE' },
   dayDate: { fontSize: 14, fontWeight: '600', color: '#333' },
   typeBadge: {
     flexDirection: 'row',
@@ -365,12 +390,12 @@ const styles = StyleSheet.create({
   },
   officeBadge: { backgroundColor: '#fff', borderColor: '#A5D6A7' },
   remoteBadge: { backgroundColor: '#fff', borderColor: '#90CAF9' },
+  offDayBadge: { backgroundColor: '#fff', borderColor: '#BDBDBD' },
   typeText: { fontSize: 12, fontWeight: '600' },
   officeText: { color: '#2E7D32' },
   remoteText: { color: '#1565C0' },
-  offDayLabel: { flex: 1, fontSize: 13, color: '#757575' },
-  offDayDash: { fontSize: 16, color: '#999', fontWeight: '600' },
-  saveRow: { marginTop: 20, alignItems: 'flex-start' },
+  offDayText: { color: '#757575' },
+  saveRow: { marginTop: 20 },
   preview: { marginTop: 24, padding: 16, backgroundColor: '#f3e5f5', borderRadius: 12 },
   previewTitle: { fontSize: 15, fontWeight: '600', marginBottom: 10, color: '#6a1b9a' },
   previewItem: { fontSize: 14, color: '#333', lineHeight: 22 },

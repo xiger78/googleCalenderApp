@@ -7,6 +7,7 @@ interface Props {
   variant?: 'primary' | 'secondary' | 'success';
   disabled?: boolean;
   loading?: boolean;
+  fullWidth?: boolean;
 }
 
 export function Button({
@@ -15,12 +16,14 @@ export function Button({
   variant = 'primary',
   disabled = false,
   loading = false,
+  fullWidth = false,
 }: Props) {
   return (
     <TouchableOpacity
       style={[
         styles.btn,
         styles[variant],
+        fullWidth && styles.fullWidth,
         (disabled || loading) && styles.disabled,
       ]}
       onPress={onPress}
@@ -44,6 +47,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 90,
+  },
+  fullWidth: {
+    alignSelf: 'stretch',
+    width: '100%',
   },
   primary: {
     backgroundColor: '#1976D2',

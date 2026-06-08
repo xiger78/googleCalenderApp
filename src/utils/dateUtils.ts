@@ -55,5 +55,21 @@ export function formatShortDateLabel(
   return `${month}.${day} (${dow})`;
 }
 
+export function formatSlashDateWithWeekday(
+  dateKey: string,
+  weekdays: string[]
+): string {
+  const { year, month, day } = parseDateKey(dateKey);
+  const dow = weekdays[new Date(dateKey).getDay()];
+  const m = String(month).padStart(2, '0');
+  const d = String(day).padStart(2, '0');
+  return `${year}/${m}/${d}(${dow})`;
+}
+
+export function isWeekend(dateKey: string): boolean {
+  const dow = new Date(dateKey).getDay();
+  return dow === 0 || dow === 6;
+}
+
 export const YEARS = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 2 + i);
 export const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
