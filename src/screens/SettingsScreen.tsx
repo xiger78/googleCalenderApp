@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -91,11 +91,21 @@ export function SettingsScreen() {
   const [exporting, setExporting] = useState(false);
   const [lastCsvUri, setLastCsvUri] = useState<string | null>(null);
 
-  const lunchHour = String(Math.floor(lunchBreakMinutes / 60)).padStart(2, '0');
-  const lunchMinute = String(lunchBreakMinutes % 60).padStart(2, '0');
-  const eveningHour = String(Math.floor(eveningBreakMinutes / 60)).padStart(2, '0');
-  const eveningMinute = String(eveningBreakMinutes % 60).padStart(2, '0');
+  const [draftLunchMinutes, setDraftLunchMinutes] = useState(lunchBreakMinutes);
+  const [draftEveningMinutes, setDraftEveningMinutes] = useState(eveningBreakMinutes);
+  const [savingBreakTimes, setSavingBreakTimes] = useState(false);
+
   const totalBreakMinutes = lunchBreakMinutes + eveningBreakMinutes;
+
+  useEffect(() => {
+    setDraftLunchMinutes(lunchBreakMinutes);
+    setDraftEveningMinutes(eveningBreakMinutes);
+  }, [lunchBreakMinutes, eveningBreakMinutes]);
+
+  const draftLunchHour = String(Math.floor(draftLunchMinutes / 60)).padStart(2, '0');
+  const draftLunchMinute = String(draftLunchMinutes % 60).padStart(2, '0');
+  const draftEveningHour = String(Math.floor(draftEveningMinutes / 60)).padStart(2, '0');
+  const draftEveningMinute = String(draftEveningMinutes % 60).padStart(2, '0');
 
   const [emailTo, setEmailTo] = useState('');
   const [emailSubject, setEmailSubject] = useState('');
@@ -117,15 +127,26 @@ export function SettingsScreen() {
   };
 
   const handleLunchChange = (part: 'hour' | 'minute', value: string) => {
-    const h = part === 'hour' ? parseInt(value || '0', 10) : parseInt(lunchHour, 10);
-    const m = part === 'minute' ? parseInt(value || '0', 10) : parseInt(lunchMinute, 10);
-    setLunchBreakMinutes(h * 60 + m);
+    const h = part === 'hour' ? parseInt(value || '0', 10) : parseInt(draftLunchHour, 10);
+    const m = part === 'minute' ? parseInt(value || '0', 10) : parseInt(draftLunchMinute, 10);
+    setDraftLunchMinutes(h * 60 + m);
   };
 
   const handleEveningChange = (part: 'hour' | 'minute', value: string) => {
-    const h = part === 'hour' ? parseInt(value || '0', 10) : parseInt(eveningHour, 10);
-    const m = part === 'minute' ? parseInt(value || '0', 10) : parseInt(eveningMinute, 10);
-    setEveningBreakMinutes(h * 60 + m);
+    const h = part === 'hour' ? parseInt(value || '0', 10) : parseInt(draftEveningHour, 10);
+    const m = part === 'minute' ? parseInt(value || '0', 10) : parseInt(draftEveningMinute, 10);
+    setDraftEveningMinutes(h * 60 + m);
+  };
+
+  const handleSaveBreakTimes = async () => {
+    setSavingBreakTimes(true);
+    try {
+      await setLunchBreakMinutes(draftLunchMinutes);
+      await setEveningBreakMinutes(draftEveningMinutes);
+      Alert.alert(tr('alertSaved'), tr('alertBreakTimeSaved'));
+    } finally {
+      setSavingBreakTimes(false);
+    }
   };
 
   const handleExport = async () => {
@@ -228,19 +249,27 @@ export function SettingsScreen() {
         <Text style={styles.label}>{tr('settingsLunch')}</Text>
         <TimeInput
           label=""
-          hour={lunchHour}
-          minute={lunchMinute}
+          hour={draftLunchHour}
+          minute={draftLunchMinute}
           onHourChange={(v) => handleLunchChange('hour', v)}
           onMinuteChange={(v) => handleLunchChange('minute', v)}
         />
         <Text style={styles.label}>{tr('settingsEvening')}</Text>
         <TimeInput
           label=""
-          hour={eveningHour}
-          minute={eveningMinute}
+          hour={draftEveningHour}
+          minute={draftEveningMinute}
           onHourChange={(v) => handleEveningChange('hour', v)}
           onMinuteChange={(v) => handleEveningChange('minute', v)}
         />
+        <View style={styles.saveBreakRow}>
+          <Button
+            title={tr('save')}
+            onPress={handleSaveBreakTimes}
+            loading={savingBreakTimes}
+            fullWidth
+          />
+        </View>
       </SettingsCard>
 
       <SettingsCard
@@ -357,6 +386,7 @@ const styles = StyleSheet.create({
     borderColor: '#eee',
   },
   label: { fontSize: 14, fontWeight: '600', marginBottom: 6, marginTop: 8, color: '#333' },
+  saveBreakRow: { marginTop: 16 },
   input: {
     borderWidth: 1,
     borderColor: '#ddd',

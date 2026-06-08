@@ -31,7 +31,12 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       if (raw) {
         try {
           const parsed = JSON.parse(raw) as AppSettings;
-          setSettings({ ...defaultSettings, ...parsed, eveningBreakMinutes: parsed.eveningBreakMinutes ?? 0 });
+          setSettings({
+            ...defaultSettings,
+            ...parsed,
+            lunchBreakMinutes: parsed.lunchBreakMinutes ?? 60,
+            eveningBreakMinutes: parsed.eveningBreakMinutes ?? 0,
+          });
         } catch {
           /* use defaults */
         }

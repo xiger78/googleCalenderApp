@@ -206,9 +206,11 @@ Display language, break time, attendance report (CSV), and email.
 Choose **Japanese**, **Korean**, or **English**. All screens update immediately.
 
 #### 5-2. Break Time Settings (휴계시간 설정)
-- **Lunch break** (excluded from work hours)
-- **Dinner break** (excluded from work hours)
-- Both are subtracted when calculating work hours on History, save preview, and CSV export
+- Card: **Break Time (Lunch, Dinner)** under category **Break Time Settings**
+- **Lunch break** (excluded from work hours) — default **1 hour** (`01:00`)
+- **Dinner break** (excluded from work hours) — default **0 hours** (`00:00`)
+- Edit lunch and dinner times, then tap the full-width **Save** button below the dinner field
+- Saved break times are subtracted when calculating work hours on History, save preview, and CSV export
 
 #### 5-3. Attendance Report (CSV) (근태장표출력(CSV))
 - Select export month
@@ -243,7 +245,7 @@ Choose **Japanese**, **Korean**, or **English**. All screens update immediately.
 | Bulk apply button | **Apply** button is **full width**, same as **Save** |
 | History layout | Date lines are **center-aligned**; colors match commute screen |
 | Work hours display | History and save preview show **(9.0)** / **(9.5)** style hours after clock-in/out (lunch + dinner breaks excluded) |
-| Break time settings | **Break Time Settings** card: lunch and dinner breaks; **Attendance Report (CSV)** card for export |
+| Break time settings | **Break Time (Lunch, Dinner)** card with defaults lunch **1h** / dinner **0h** and full-width **Save**; **Attendance Report (CSV)** card for export |
 | Total work hours | First line **`[Work hours:total]`** sums daily work hours on History and save preview |
 | Save preview format | Matches **Attendance History** line format (`YYYY/MM/DD(weekday) HH:MM-HH:MM (hours)`) |
 | Bulk time entry | Excludes **weekends** and **Japanese holidays** from bulk apply |
