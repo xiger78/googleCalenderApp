@@ -135,7 +135,7 @@ Enter clock-in and clock-out times for each day of the selected month.
 **Save preview (same format as Attendance History):**
 - **First line:** `[Work hours:total]` — sum of daily work hours for the month (same decimal format)
 - Each saved row: `YYYY/MM/DD(weekday) HH:MM-HH:MM (work hours)`, center-aligned
-- Work hours = clock-out − clock-in − **lunch break** (from Settings), shown in parentheses as a decimal (e.g. `9.0` for 9 hours, `9.5` for 9.5 hours)
+- Work hours = clock-out − clock-in − **lunch + dinner break** (from Settings), shown in parentheses as a decimal (e.g. `9.0` for 9 hours, `9.5` for 9.5 hours)
 - Example:
 ```
 [Work hours:160.0]
@@ -185,7 +185,7 @@ View monthly attendance records.
 - The list updates automatically for the selected month
 - **First line:** `[Work hours:total]` — sum of daily work hours for all days in the month
 - Each row shows `YYYY/MM/DD(weekday) HH:MM-HH:MM (work hours)`, **center-aligned**
-- Work hours in parentheses use the same decimal format as the save preview (lunch break excluded)
+- Work hours in parentheses use the same decimal format as the save preview (lunch and dinner breaks excluded)
 - Example:
 ```
 [Work hours:160.0]
@@ -200,15 +200,19 @@ View monthly attendance records.
 
 ### 5. Settings (設定)
 
-Language, attendance report export, and email.
+Display language, break time, attendance report (CSV), and email.
 
 #### 5-1. Display Language
 Choose **Japanese**, **Korean**, or **English**. All screens update immediately.
 
-#### 5-2. Attendance Report (CSV Export)
+#### 5-2. Break Time Settings (휴계시간 설정)
+- **Lunch break** (excluded from work hours)
+- **Dinner break** (excluded from work hours)
+- Both are subtracted when calculating work hours on History, save preview, and CSV export
+
+#### 5-3. Attendance Report (CSV) (근태장표출력(CSV))
 - Select export month
-- Set lunch break duration (excluded from work hours)
-- Tap **Export** to generate and share a CSV file
+- Tap **Export** to generate and share a CSV file (uses break times from §5-2)
 
 **CSV format example:**
 ```
@@ -218,7 +222,7 @@ Choose **Japanese**, **Korean**, or **English**. All screens update immediately.
 [総勤務時間:160時間00分]
 ```
 
-#### 5-3. Send Email
+#### 5-4. Send Email
 - Enter recipient, subject, and body
 - Attach files (including exported CSV)
 - Tap **Send Email** to open the device mail app
@@ -238,7 +242,8 @@ Choose **Japanese**, **Korean**, or **English**. All screens update immediately.
 | Holiday work days | Sat/Sun/holiday marked as office day defaults to **:Office**; tap label to switch Office/Remote via popup |
 | Bulk apply button | **Apply** button is **full width**, same as **Save** |
 | History layout | Date lines are **center-aligned**; colors match commute screen |
-| Work hours display | History and save preview show **(9.0)** / **(9.5)** style hours after clock-in/out (lunch break excluded) |
+| Work hours display | History and save preview show **(9.0)** / **(9.5)** style hours after clock-in/out (lunch + dinner breaks excluded) |
+| Break time settings | **Break Time Settings** card: lunch and dinner breaks; **Attendance Report (CSV)** card for export |
 | Total work hours | First line **`[Work hours:total]`** sums daily work hours on History and save preview |
 | Save preview format | Matches **Attendance History** line format (`YYYY/MM/DD(weekday) HH:MM-HH:MM (hours)`) |
 | Bulk time entry | Excludes **weekends** and **Japanese holidays** from bulk apply |

@@ -142,7 +142,8 @@ export function CommuteTimeScreen() {
   const [previewTotalHours, setPreviewTotalHours] = useState<string | null>(null);
 
   const { data, setCommuteTimes, setHolidayWorkType } = useWorkDataContext();
-  const { language, lunchBreakMinutes, tr } = useLanguage();
+  const { language, lunchBreakMinutes, eveningBreakMinutes, tr } = useLanguage();
+  const totalBreakMinutes = lunchBreakMinutes + eveningBreakMinutes;
   const bulkApplyDays = getBulkApplyDateKeys(year, month);
   const daysInMonth = getDaysInMonth(year, month);
   const weekdays = getWeekdays(language);
@@ -242,14 +243,14 @@ export function CommuteTimeScreen() {
       const clockOut = times.clockOut ?? '--:--';
       timeEntries.push({ clockIn, clockOut });
       const dateLabel = formatSlashDateWithWeekday(dateKey, weekdays);
-      const workHours = getWorkHoursParenthetical(clockIn, clockOut, lunchBreakMinutes);
+      const workHours = getWorkHoursParenthetical(clockIn, clockOut, totalBreakMinutes);
       return {
         dateKey,
         line: `${dateLabel} ${clockIn}-${clockOut}${workHours}`,
       };
     }).filter(Boolean) as PreviewItem[];
 
-    const totalMinutes = sumWorkMinutes(timeEntries, lunchBreakMinutes);
+    const totalMinutes = sumWorkMinutes(timeEntries, totalBreakMinutes);
     await setCommuteTimes(merged);
     setPreview(savedList);
     setPreviewTotalHours(formatTotalWorkHoursDecimal(totalMinutes));

@@ -8,12 +8,12 @@ export function timeToMinutes(time: string): number | null {
 export function calcWorkMinutes(
   clockIn: string,
   clockOut: string,
-  lunchMinutes = 0
+  breakMinutes = 0
 ): number | null {
   const inMin = timeToMinutes(clockIn);
   const outMin = timeToMinutes(clockOut);
   if (inMin === null || outMin === null || outMin <= inMin) return null;
-  return Math.max(0, outMin - inMin - lunchMinutes);
+  return Math.max(0, outMin - inMin - breakMinutes);
 }
 
 /** 9시간 → "9.0", 9시간 30분 → "9.5" */
@@ -25,18 +25,18 @@ export function formatWorkHoursDecimal(workMinutes: number | null): string | nul
 export function getWorkHoursParenthetical(
   clockIn: string,
   clockOut: string,
-  lunchMinutes = 0
+  breakMinutes = 0
 ): string {
-  const decimal = formatWorkHoursDecimal(calcWorkMinutes(clockIn, clockOut, lunchMinutes));
+  const decimal = formatWorkHoursDecimal(calcWorkMinutes(clockIn, clockOut, breakMinutes));
   return decimal ? ` (${decimal})` : '';
 }
 
 export function sumWorkMinutes(
   entries: { clockIn: string; clockOut: string }[],
-  lunchMinutes = 0
+  breakMinutes = 0
 ): number {
   return entries.reduce((sum, { clockIn, clockOut }) => {
-    const mins = calcWorkMinutes(clockIn, clockOut, lunchMinutes);
+    const mins = calcWorkMinutes(clockIn, clockOut, breakMinutes);
     return sum + (mins ?? 0);
   }, 0);
 }

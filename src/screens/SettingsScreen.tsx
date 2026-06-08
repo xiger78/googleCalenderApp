@@ -68,7 +68,15 @@ function SettingsCard({
 
 export function SettingsScreen() {
   const now = new Date();
-  const { language, lunchBreakMinutes, setLanguage, setLunchBreakMinutes, tr } = useLanguage();
+  const {
+    language,
+    lunchBreakMinutes,
+    eveningBreakMinutes,
+    setLanguage,
+    setLunchBreakMinutes,
+    setEveningBreakMinutes,
+    tr,
+  } = useLanguage();
   const { data } = useWorkDataContext();
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>({
@@ -85,6 +93,9 @@ export function SettingsScreen() {
 
   const lunchHour = String(Math.floor(lunchBreakMinutes / 60)).padStart(2, '0');
   const lunchMinute = String(lunchBreakMinutes % 60).padStart(2, '0');
+  const eveningHour = String(Math.floor(eveningBreakMinutes / 60)).padStart(2, '0');
+  const eveningMinute = String(eveningBreakMinutes % 60).padStart(2, '0');
+  const totalBreakMinutes = lunchBreakMinutes + eveningBreakMinutes;
 
   const [emailTo, setEmailTo] = useState('');
   const [emailSubject, setEmailSubject] = useState('');
@@ -111,6 +122,12 @@ export function SettingsScreen() {
     setLunchBreakMinutes(h * 60 + m);
   };
 
+  const handleEveningChange = (part: 'hour' | 'minute', value: string) => {
+    const h = part === 'hour' ? parseInt(value || '0', 10) : parseInt(eveningHour, 10);
+    const m = part === 'minute' ? parseInt(value || '0', 10) : parseInt(eveningMinute, 10);
+    setEveningBreakMinutes(h * 60 + m);
+  };
+
   const handleExport = async () => {
     setExporting(true);
     try {
@@ -119,7 +136,7 @@ export function SettingsScreen() {
         reportYear,
         reportMonth,
         language,
-        lunchBreakMinutes
+        totalBreakMinutes
       );
       setLastCsvUri(uri);
       Alert.alert(tr('alertDone'), tr('alertReportDone'));
@@ -199,7 +216,7 @@ export function SettingsScreen() {
       </SettingsCard>
 
       <SettingsCard
-        category={tr('settingsReport')}
+        category={tr('settingsBreakTime')}
         icon="calendar-check"
         iconColor="#4CAF50"
         iconBg="#E8F5E9"
@@ -216,10 +233,18 @@ export function SettingsScreen() {
           onHourChange={(v) => handleLunchChange('hour', v)}
           onMinuteChange={(v) => handleLunchChange('minute', v)}
         />
+        <Text style={styles.label}>{tr('settingsEvening')}</Text>
+        <TimeInput
+          label=""
+          hour={eveningHour}
+          minute={eveningMinute}
+          onHourChange={(v) => handleEveningChange('hour', v)}
+          onMinuteChange={(v) => handleEveningChange('minute', v)}
+        />
       </SettingsCard>
 
       <SettingsCard
-        category={tr('settingsReport')}
+        category={tr('settingsCsvExport')}
         icon="printer"
         iconColor="#7B1FA2"
         iconBg="#F3E5F5"

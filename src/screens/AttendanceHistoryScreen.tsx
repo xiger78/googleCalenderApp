@@ -30,7 +30,8 @@ export function AttendanceHistoryScreen() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [totalWorkHours, setTotalWorkHours] = useState<string>('0.0');
   const { data } = useWorkDataContext();
-  const { language, lunchBreakMinutes, tr } = useLanguage();
+  const { language, lunchBreakMinutes, eveningBreakMinutes, tr } = useLanguage();
+  const totalBreakMinutes = lunchBreakMinutes + eveningBreakMinutes;
   const weekdays = getWeekdays(language);
 
   const loadHistory = () => {
@@ -45,7 +46,7 @@ export function AttendanceHistoryScreen() {
       const dateLabel = formatSlashDateWithWeekday(dateKey, weekdays);
       const dayType = getCommuteDayType(dateKey, data.workDays, data.holidayWorkTypes);
 
-      const workHours = getWorkHoursParenthetical(clockIn, clockOut, lunchBreakMinutes);
+      const workHours = getWorkHoursParenthetical(clockIn, clockOut, totalBreakMinutes);
 
       return {
         dateKey,
@@ -54,14 +55,14 @@ export function AttendanceHistoryScreen() {
       };
     });
 
-    const totalMinutes = sumWorkMinutes(timeEntries, lunchBreakMinutes);
+    const totalMinutes = sumWorkMinutes(timeEntries, totalBreakMinutes);
     setTotalWorkHours(formatTotalWorkHoursDecimal(totalMinutes));
     setHistory(result);
   };
 
   useEffect(() => {
     loadHistory();
-  }, [year, month, data.workDays, data.commuteTimes, data.holidayWorkTypes, language, lunchBreakMinutes]);
+  }, [year, month, data.workDays, data.commuteTimes, data.holidayWorkTypes, language, lunchBreakMinutes, eveningBreakMinutes]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>

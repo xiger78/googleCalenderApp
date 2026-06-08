@@ -11,4 +11,5 @@ export const SETTINGS_STORAGE_KEY = '@app_settings';
 export interface AppSettings {
   language: Language;
   lunchBreakMinutes: number;
+  eveningBreakMinutes: number;
 }

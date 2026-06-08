@@ -6,13 +6,16 @@ import { t, TranslationKey } from '../i18n/translations';
 const defaultSettings: AppSettings = {
   language: 'ja',
   lunchBreakMinutes: 60,
+  eveningBreakMinutes: 0,
 };
 
 interface LanguageContextType {
   language: Language;
   lunchBreakMinutes: number;
+  eveningBreakMinutes: number;
   setLanguage: (lang: Language) => Promise<void>;
   setLunchBreakMinutes: (minutes: number) => Promise<void>;
+  setEveningBreakMinutes: (minutes: number) => Promise<void>;
   tr: (key: TranslationKey, params?: Record<string, string | number>) => string;
   loading: boolean;
 }
@@ -28,7 +31,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       if (raw) {
         try {
           const parsed = JSON.parse(raw) as AppSettings;
-          setSettings({ ...defaultSettings, ...parsed });
+          setSettings({ ...defaultSettings, ...parsed, eveningBreakMinutes: parsed.eveningBreakMinutes ?? 0 });
         } catch {
           /* use defaults */
         }
@@ -53,6 +56,14 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const setEveningBreakMinutes = useCallback(async (eveningBreakMinutes: number) => {
+    setSettings((prev) => {
+      const next = { ...prev, eveningBreakMinutes };
+      AsyncStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
   const tr = useCallback(
     (key: TranslationKey, params?: Record<string, string | number>) =>
       t(settings.language, key, params),
@@ -64,8 +75,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       value={{
         language: settings.language,
         lunchBreakMinutes: settings.lunchBreakMinutes,
+        eveningBreakMinutes: settings.eveningBreakMinutes ?? 0,
         setLanguage,
         setLunchBreakMinutes,
+        setEveningBreakMinutes,
         tr,
         loading,
       }}
