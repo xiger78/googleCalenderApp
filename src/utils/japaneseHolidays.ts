@@ -130,6 +130,10 @@ export function isWeekendDate(dateKey: string): boolean {
   return isWeekend(year, month, day);
 }
 
+export function isNonWorkingDay(dateKey: string): boolean {
+  return isWeekendDate(dateKey) || isJapaneseHoliday(dateKey);
+}
+
 /** 일괄등록 대상: 토·일 및 일본 공휴일 제외 */
 export function getBulkApplyDateKeys(year: number, month: number): string[] {
   const holidays = getJapaneseHolidaysForYear(year);

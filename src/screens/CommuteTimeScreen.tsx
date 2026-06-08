@@ -14,7 +14,7 @@ import {
   formatYYYYMMDD,
   parseTime,
 } from '../utils/dateUtils';
-import { getBulkApplyDateKeys } from '../utils/japaneseHolidays';
+import { getBulkApplyDateKeys, isNonWorkingDay } from '../utils/japaneseHolidays';
 import { CommuteTime } from '../types';
 
 type PreviewItem = {
@@ -28,6 +28,7 @@ function DayTimeCard({
   dateKey,
   typeLabel,
   isRemote,
+  isOffDay,
   times,
   onUpdateTime,
   clockInLabel,
@@ -36,6 +37,7 @@ function DayTimeCard({
   dateKey: string;
   typeLabel: string;
   isRemote: boolean;
+  isOffDay: boolean;
   times: CommuteTime;
   onUpdateTime: (
     dateKey: string,
@@ -49,8 +51,14 @@ function DayTimeCard({
   const clockIn = parseTime(times.clockIn);
   const clockOut = parseTime(times.clockOut);
 
+  const cardStyle = isOffDay
+    ? styles.offDayCard
+    : isRemote
+      ? styles.remoteCard
+      : styles.dayCard;
+
   return (
-    <View style={[styles.dayCard, isRemote && styles.remoteCard]}>
+    <View style={cardStyle}>
       <Text style={styles.dayLabel}>
         {formatYYYYMMDD(dateKey)} · {typeLabel}
       </Text>
@@ -239,6 +247,7 @@ export function CommuteTimeScreen() {
             dateKey={dateKey}
             typeLabel={tr('office')}
             isRemote={false}
+            isOffDay={isNonWorkingDay(dateKey)}
             times={getTimeForDate(dateKey)}
             onUpdateTime={updateTimePart}
             clockInLabel={tr('clockIn')}
@@ -256,6 +265,7 @@ export function CommuteTimeScreen() {
           dateKey={dateKey}
           typeLabel={tr('remote')}
           isRemote
+          isOffDay={isNonWorkingDay(dateKey)}
           times={getTimeForDate(dateKey)}
           onUpdateTime={updateTimePart}
           clockInLabel={tr('clockIn')}
@@ -302,7 +312,8 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 16, fontWeight: '600', marginBottom: 12, color: '#333' },
   empty: { fontSize: 14, color: '#999', marginBottom: 16 },
   dayCard: { backgroundColor: '#e8f5e9', borderRadius: 10, padding: 12, marginBottom: 8 },
-  remoteCard: { backgroundColor: '#e3f2fd' },
+  remoteCard: { backgroundColor: '#e3f2fd', borderRadius: 10, padding: 12, marginBottom: 8 },
+  offDayCard: { backgroundColor: '#e0e0e0', borderRadius: 10, padding: 12, marginBottom: 8 },
   dayLabel: { fontWeight: '600', marginBottom: 4, color: '#333' },
   saveRow: { marginTop: 16, alignItems: 'flex-start' },
   preview: { marginTop: 24, padding: 16, backgroundColor: '#f3e5f5', borderRadius: 12 },

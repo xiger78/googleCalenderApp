@@ -102,7 +102,7 @@ The app runs on **Android 6.0 and above**. It is optimized for Android 14.
 
 ## Features
 
-The app provides five top-tab menus. The default display language is **Japanese** (configurable to Korean or English in Settings).
+The app features a **cute top banner** and **five bottom tab menus**. The default display language is **Japanese** (configurable to Korean or English in Settings).
 
 ---
 
@@ -140,6 +140,7 @@ Enter clock-in and clock-out times for office and remote days.
   - Vernal/Autumnal Equinox days
   - Substitute holidays (振替休日) and Citizens' holidays (国民の休日)
 - The screen shows the number of eligible days (e.g. `Excludes Sat/Sun & JP holidays · N days`)
+- **Saturday, Sunday, and Japanese holidays** are shown with a **gray card background**
 
 ![Commute Times](docs/images/en/screen-commute-time.png)
 
@@ -213,6 +214,8 @@ Choose **Japanese**, **Korean**, or **English**. All screens update immediately.
 | Settings tab | Display language, attendance CSV export, email with attachments |
 | APK download | Pre-built APK available at `dist/출퇴근관리-v1.0.0.apk` in the repository |
 | Holiday logic | `src/utils/japaneseHolidays.ts` calculates Japan public holidays per year |
+| App layout | **Cute top banner** + **bottom tab navigation** |
+| Off-day display | Gray background on weekend/holiday cards in Commute Times screen |
 
 ---
 
@@ -223,7 +226,7 @@ googleCalenderApp/
 ├── App.tsx                    # Main app & tab navigation
 ├── src/
 │   ├── screens/               # Feature screens
-│   ├── components/            # Shared UI components
+│   ├── components/            # Banner, calendar, shared UI
 │   ├── context/               # Data & language context
 │   ├── i18n/                  # Translations (ja/ko/en)
 │   ├── utils/                 # Date, storage, CSV, Japanese holiday utilities
@@ -232,7 +235,7 @@ googleCalenderApp/
 │   ├── en/                    # English screen captures
 │   ├── ja/                    # Japanese screen captures
 │   └── ko/                    # Korean screen captures
-├── assets/                    # App icon & splash
+├── assets/                    # App icon, banner & splash
 ├── android/                   # Native Android project
 └── dist/                      # Built APK output
 ```
