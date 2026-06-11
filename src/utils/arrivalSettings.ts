@@ -14,6 +14,7 @@ export const DEFAULT_ARRIVAL_CONFIGS: Record<WorkArrivalType, ArrivalTypeConfig>
   normal: { color: 'green', clockIn: '08:40' },
   early: { color: 'yellow', clockIn: '06:00' },
   late: { color: 'blue', clockIn: '11:00' },
+  remote: { color: 'blue', clockIn: '08:40' },
 };
 
 export const WORK_HOURS_PER_DAY = 8;

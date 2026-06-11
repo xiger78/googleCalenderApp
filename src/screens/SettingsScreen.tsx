@@ -120,6 +120,7 @@ export function SettingsScreen() {
     normalArrival,
     earlyArrival,
     lateArrival,
+    remoteArrival,
     tr,
   } = useLanguage();
   const { data } = useWorkDataContext();
@@ -140,6 +141,7 @@ export function SettingsScreen() {
   const [draftNormal, setDraftNormal] = useState<ArrivalDraft>(() => toArrivalDraft(normalArrival));
   const [draftEarly, setDraftEarly] = useState<ArrivalDraft>(() => toArrivalDraft(earlyArrival));
   const [draftLate, setDraftLate] = useState<ArrivalDraft>(() => toArrivalDraft(lateArrival));
+  const [draftRemote, setDraftRemote] = useState<ArrivalDraft>(() => toArrivalDraft(remoteArrival));
   const [savingArrival, setSavingArrival] = useState(false);
 
   const [reportYear, setReportYear] = useState(now.getFullYear());
@@ -171,6 +173,7 @@ export function SettingsScreen() {
     setDraftNormal(toArrivalDraft(normalArrival));
     setDraftEarly(toArrivalDraft(earlyArrival));
     setDraftLate(toArrivalDraft(lateArrival));
+    setDraftRemote(toArrivalDraft(remoteArrival));
   };
 
   const draftToConfig = (draft: ArrivalDraft): ArrivalTypeConfig | null => {
@@ -220,16 +223,18 @@ export function SettingsScreen() {
     const normal = draftToConfig(draftNormal);
     const early = draftToConfig(draftEarly);
     const late = draftToConfig(draftLate);
-    if (!normal || !early || !late) {
+    const remote = draftToConfig(draftRemote);
+    if (!normal || !early || !late || !remote) {
       Alert.alert(tr('alertInputError'), tr('alertInvalidClockIn'));
       return;
     }
     setSavingArrival(true);
     try {
-      await setArrivalSettings(normal, early, late);
+      await setArrivalSettings(normal, early, late, remote);
       setDraftNormal(toArrivalDraft(normal));
       setDraftEarly(toArrivalDraft(early));
       setDraftLate(toArrivalDraft(late));
+      setDraftRemote(toArrivalDraft(remote));
       Alert.alert(tr('alertSaved'), tr('alertArrivalSaved'));
     } finally {
       setSavingArrival(false);
@@ -375,6 +380,14 @@ export function SettingsScreen() {
           onColorChange={(color) => setDraftLate((prev) => ({ ...prev, color }))}
           onHourChange={(hour) => setDraftLate((prev) => ({ ...prev, hour }))}
           onMinuteChange={(minute) => setDraftLate((prev) => ({ ...prev, minute }))}
+          tr={tr}
+        />
+        <ArrivalTypeEditor
+          title={tr('arrivalRemote')}
+          draft={draftRemote}
+          onColorChange={(color) => setDraftRemote((prev) => ({ ...prev, color }))}
+          onHourChange={(hour) => setDraftRemote((prev) => ({ ...prev, hour }))}
+          onMinuteChange={(minute) => setDraftRemote((prev) => ({ ...prev, minute }))}
           tr={tr}
         />
         <View style={styles.saveBreakRow}>

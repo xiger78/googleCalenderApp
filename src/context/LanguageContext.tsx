@@ -19,6 +19,7 @@ function mergeSettings(parsed: Partial<AppSettings>): AppSettings {
     normalArrival: { ...DEFAULT_ARRIVAL_CONFIGS.normal, ...parsed.normalArrival },
     earlyArrival: { ...DEFAULT_ARRIVAL_CONFIGS.early, ...parsed.earlyArrival },
     lateArrival: { ...DEFAULT_ARRIVAL_CONFIGS.late, ...parsed.lateArrival },
+    remoteArrival: { ...DEFAULT_ARRIVAL_CONFIGS.remote, ...parsed.remoteArrival },
   };
 }
 
@@ -29,6 +30,7 @@ interface LanguageContextType {
   normalArrival: ArrivalTypeConfig;
   earlyArrival: ArrivalTypeConfig;
   lateArrival: ArrivalTypeConfig;
+  remoteArrival: ArrivalTypeConfig;
   setLanguage: (lang: Language) => Promise<void>;
   setLunchBreakMinutes: (minutes: number) => Promise<void>;
   setEveningBreakMinutes: (minutes: number) => Promise<void>;
@@ -36,7 +38,8 @@ interface LanguageContextType {
   setArrivalSettings: (
     normal: ArrivalTypeConfig,
     early: ArrivalTypeConfig,
-    late: ArrivalTypeConfig
+    late: ArrivalTypeConfig,
+    remote: ArrivalTypeConfig
   ) => Promise<void>;
   tr: (key: TranslationKey, params?: Record<string, string | number>) => string;
   loading: boolean;
@@ -101,13 +104,19 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   );
 
   const setArrivalSettings = useCallback(
-    async (normal: ArrivalTypeConfig, early: ArrivalTypeConfig, late: ArrivalTypeConfig) => {
+    async (
+      normal: ArrivalTypeConfig,
+      early: ArrivalTypeConfig,
+      late: ArrivalTypeConfig,
+      remote: ArrivalTypeConfig
+    ) => {
       setSettings((prev) => {
         const next = {
           ...prev,
           normalArrival: normal,
           earlyArrival: early,
           lateArrival: late,
+          remoteArrival: remote,
         };
         AsyncStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(next));
         return next;
@@ -131,6 +140,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         normalArrival: settings.normalArrival,
         earlyArrival: settings.earlyArrival,
         lateArrival: settings.lateArrival,
+        remoteArrival: settings.remoteArrival,
         setLanguage,
         setLunchBreakMinutes,
         setEveningBreakMinutes,

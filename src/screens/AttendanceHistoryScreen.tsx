@@ -44,7 +44,12 @@ export function AttendanceHistoryScreen() {
       const clockOut = commute?.clockOut || '--:--';
       timeEntries.push({ clockIn, clockOut });
       const dateLabel = formatSlashDateWithWeekday(dateKey, weekdays);
-      const dayType = getCommuteDayType(dateKey, data.workDays, data.holidayWorkTypes);
+      const dayType = getCommuteDayType(
+        dateKey,
+        data.workDays,
+        data.holidayWorkTypes,
+        data.workDayTypes
+      );
 
       const workHours = getWorkHoursParenthetical(clockIn, clockOut, totalBreakMinutes);
 
@@ -62,7 +67,7 @@ export function AttendanceHistoryScreen() {
 
   useEffect(() => {
     loadHistory();
-  }, [year, month, data.workDays, data.commuteTimes, data.holidayWorkTypes, language, lunchBreakMinutes, eveningBreakMinutes]);
+  }, [year, month, data.workDays, data.commuteTimes, data.holidayWorkTypes, data.workDayTypes, language, lunchBreakMinutes, eveningBreakMinutes]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>

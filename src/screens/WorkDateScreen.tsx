@@ -8,7 +8,7 @@ import { getWorkDaysInMonth } from '../utils/storage';
 import { WorkArrivalType } from '../types';
 import { getArrivalColorHex } from '../utils/arrivalSettings';
 
-const ARRIVAL_MODES: WorkArrivalType[] = ['normal', 'early', 'late'];
+const ARRIVAL_MODES: WorkArrivalType[] = ['normal', 'early', 'late', 'remote'];
 
 export function WorkDateScreen() {
   const now = new Date();
@@ -16,7 +16,7 @@ export function WorkDateScreen() {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [selectedMode, setSelectedMode] = useState<WorkArrivalType>('normal');
   const { data, setWorkDayArrival, clearWorkDay } = useWorkDataContext();
-  const { tr, normalArrival, earlyArrival, lateArrival } = useLanguage();
+  const { tr, normalArrival, earlyArrival, lateArrival, remoteArrival } = useLanguage();
 
   const monthWorkDays = getWorkDaysInMonth(data.workDays, year, month);
 
@@ -25,8 +25,9 @@ export function WorkDateScreen() {
       normal: normalArrival,
       early: earlyArrival,
       late: lateArrival,
+      remote: remoteArrival,
     }),
-    [normalArrival, earlyArrival, lateArrival]
+    [normalArrival, earlyArrival, lateArrival, remoteArrival]
   );
 
   const dateColors = useMemo(() => {
@@ -42,6 +43,7 @@ export function WorkDateScreen() {
   const modeLabel = (type: WorkArrivalType) => {
     if (type === 'early') return tr('arrivalEarly');
     if (type === 'late') return tr('arrivalLate');
+    if (type === 'remote') return tr('arrivalRemote');
     return tr('arrivalNormal');
   };
 
@@ -134,11 +136,12 @@ const styles = StyleSheet.create({
   },
   modeRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
     marginTop: 20,
   },
   modeBtn: {
-    flex: 1,
+    width: '48%',
     paddingVertical: 12,
     paddingHorizontal: 6,
     borderRadius: 10,

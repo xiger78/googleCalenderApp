@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrivalTypeConfig, HolidayWorkType, WorkArrivalType, WorkData } from '../types';
 import { configToCommuteTimes } from '../utils/arrivalSettings';
+import { isNonWorkingDay } from '../utils/japaneseHolidays';
 import { loadWorkData, saveWorkData } from '../utils/storage';
 
 export function useWorkData() {
@@ -44,11 +45,16 @@ export function useWorkData() {
         ? data.workDays
         : [...data.workDays, dateKey].sort();
       const times = configToCommuteTimes(config);
+      const holidayWorkTypes = { ...data.holidayWorkTypes };
+      if (isNonWorkingDay(dateKey)) {
+        holidayWorkTypes[dateKey] = arrivalType === 'remote' ? 'remote' : 'office';
+      }
       await persist({
         ...data,
         workDays,
         workDayTypes: { ...data.workDayTypes, [dateKey]: arrivalType },
         commuteTimes: { ...data.commuteTimes, [dateKey]: times },
+        holidayWorkTypes,
       });
     },
     [data, persist]

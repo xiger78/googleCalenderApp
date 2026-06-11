@@ -344,7 +344,12 @@ export function CommuteTimeScreen() {
 
       <View style={styles.dayList}>
         {monthDays.map((dateKey) => {
-          const dayType = getCommuteDayType(dateKey, data.workDays, data.holidayWorkTypes);
+          const dayType = getCommuteDayType(
+            dateKey,
+            data.workDays,
+            data.holidayWorkTypes,
+            data.workDayTypes
+          );
           return (
             <DayTimeRow
               key={dateKey}
