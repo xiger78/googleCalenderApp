@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { YearMonthPicker } from '../components/YearMonthPicker';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -9,18 +9,19 @@ import {
   formatDateKey,
   formatSlashDateWithWeekday,
 } from '../utils/dateUtils';
-import { getCommuteDayType } from '../utils/commuteDayType';
 import {
   formatTotalWorkHoursDecimal,
   getWorkHoursParenthetical,
   sumWorkMinutes,
 } from '../utils/workDuration';
 import { getWeekdays } from '../i18n/translations';
+import { ArrivalTypeConfig, WorkArrivalType } from '../types';
+import { getCommuteRowColors } from '../utils/arrivalSettings';
 
 type HistoryItem = {
   dateKey: string;
   line: string;
-  dayType: 'office' | 'remote' | 'holiday';
+  rowColors: { backgroundColor: string; borderColor: string };
 };
 
 export function AttendanceHistoryScreen() {
@@ -30,9 +31,30 @@ export function AttendanceHistoryScreen() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [totalWorkHours, setTotalWorkHours] = useState<string>('0.0');
   const { data } = useWorkDataContext();
-  const { language, lunchBreakMinutes, eveningBreakMinutes, tr } = useLanguage();
+  const {
+    language,
+    lunchBreakMinutes,
+    eveningBreakMinutes,
+    normalArrival,
+    earlyArrival,
+    lateArrival,
+    remoteArrival,
+    vacationArrival,
+    tr,
+  } = useLanguage();
   const totalBreakMinutes = lunchBreakMinutes + eveningBreakMinutes;
   const weekdays = getWeekdays(language);
+
+  const arrivalConfigs = useMemo<Record<WorkArrivalType, ArrivalTypeConfig>>(
+    () => ({
+      normal: normalArrival,
+      early: earlyArrival,
+      late: lateArrival,
+      remote: remoteArrival,
+      vacation: vacationArrival,
+    }),
+    [normalArrival, earlyArrival, lateArrival, remoteArrival, vacationArrival]
+  );
 
   const loadHistory = () => {
     const daysInMonth = getDaysInMonth(year, month);
@@ -44,19 +66,18 @@ export function AttendanceHistoryScreen() {
       const clockOut = commute?.clockOut || '--:--';
       timeEntries.push({ clockIn, clockOut });
       const dateLabel = formatSlashDateWithWeekday(dateKey, weekdays);
-      const dayType = getCommuteDayType(
+      const rowColors = getCommuteRowColors(
         dateKey,
         data.workDays,
-        data.holidayWorkTypes,
-        data.workDayTypes
+        data.workDayTypes,
+        arrivalConfigs
       );
-
       const workHours = getWorkHoursParenthetical(clockIn, clockOut, totalBreakMinutes);
 
       return {
         dateKey,
         line: `${dateLabel} ${clockIn}-${clockOut}${workHours}`,
-        dayType,
+        rowColors,
       };
     });
 
@@ -67,7 +88,17 @@ export function AttendanceHistoryScreen() {
 
   useEffect(() => {
     loadHistory();
-  }, [year, month, data.workDays, data.commuteTimes, data.holidayWorkTypes, data.workDayTypes, language, lunchBreakMinutes, eveningBreakMinutes]);
+  }, [
+    year,
+    month,
+    data.workDays,
+    data.commuteTimes,
+    data.workDayTypes,
+    language,
+    lunchBreakMinutes,
+    eveningBreakMinutes,
+    arrivalConfigs,
+  ]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -84,11 +115,10 @@ export function AttendanceHistoryScreen() {
             key={item.dateKey}
             style={[
               styles.listRow,
-              item.dayType === 'holiday'
-                ? styles.holidayRow
-                : item.dayType === 'office'
-                  ? styles.officeRow
-                  : styles.remoteRow,
+              {
+                backgroundColor: item.rowColors.backgroundColor,
+                borderColor: item.rowColors.borderColor,
+              },
             ]}
           >
             <Text style={styles.listLine}>{item.line}</Text>
@@ -123,12 +153,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 14,
     borderWidth: 1,
-    borderColor: '#eee',
     alignItems: 'center',
   },
-  officeRow: { backgroundColor: '#F1F8E9', borderColor: '#A5D6A7' },
-  remoteRow: { backgroundColor: '#E3F2FD', borderColor: '#90CAF9' },
-  holidayRow: { backgroundColor: '#FCE4EC', borderColor: '#F8BBD0' },
   listLine: {
     fontSize: 14,
     fontWeight: '500',

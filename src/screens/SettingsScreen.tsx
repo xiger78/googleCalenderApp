@@ -76,6 +76,26 @@ type ArrivalDraft = {
   minute: string;
 };
 
+function ArrivalColorOnlyEditor({
+  title,
+  color,
+  onColorChange,
+  tr,
+}: {
+  title: string;
+  color: ArrivalColor;
+  onColorChange: (color: ArrivalColor) => void;
+  tr: (key: import('../i18n/translations').TranslationKey) => string;
+}) {
+  return (
+    <View style={styles.arrivalBlock}>
+      <Text style={styles.arrivalBlockTitle}>{title}</Text>
+      <Text style={styles.label}>{tr('settingsArrivalColor')}</Text>
+      <ColorPicker value={color} onChange={onColorChange} />
+    </View>
+  );
+}
+
 function ArrivalTypeEditor({
   title,
   draft,
@@ -121,6 +141,7 @@ export function SettingsScreen() {
     earlyArrival,
     lateArrival,
     remoteArrival,
+    vacationArrival,
     tr,
   } = useLanguage();
   const { data } = useWorkDataContext();
@@ -142,6 +163,9 @@ export function SettingsScreen() {
   const [draftEarly, setDraftEarly] = useState<ArrivalDraft>(() => toArrivalDraft(earlyArrival));
   const [draftLate, setDraftLate] = useState<ArrivalDraft>(() => toArrivalDraft(lateArrival));
   const [draftRemote, setDraftRemote] = useState<ArrivalDraft>(() => toArrivalDraft(remoteArrival));
+  const [draftVacationColor, setDraftVacationColor] = useState<ArrivalColor>(
+    () => vacationArrival.color
+  );
   const [savingArrival, setSavingArrival] = useState(false);
 
   const [reportYear, setReportYear] = useState(now.getFullYear());
@@ -174,6 +198,7 @@ export function SettingsScreen() {
     setDraftEarly(toArrivalDraft(earlyArrival));
     setDraftLate(toArrivalDraft(lateArrival));
     setDraftRemote(toArrivalDraft(remoteArrival));
+    setDraftVacationColor(vacationArrival.color);
   };
 
   const draftToConfig = (draft: ArrivalDraft): ArrivalTypeConfig | null => {
@@ -224,17 +249,19 @@ export function SettingsScreen() {
     const early = draftToConfig(draftEarly);
     const late = draftToConfig(draftLate);
     const remote = draftToConfig(draftRemote);
+    const vacation = { color: draftVacationColor, clockIn: vacationArrival.clockIn };
     if (!normal || !early || !late || !remote) {
       Alert.alert(tr('alertInputError'), tr('alertInvalidClockIn'));
       return;
     }
     setSavingArrival(true);
     try {
-      await setArrivalSettings(normal, early, late, remote);
+      await setArrivalSettings(normal, early, late, remote, vacation);
       setDraftNormal(toArrivalDraft(normal));
       setDraftEarly(toArrivalDraft(early));
       setDraftLate(toArrivalDraft(late));
       setDraftRemote(toArrivalDraft(remote));
+      setDraftVacationColor(vacation.color);
       Alert.alert(tr('alertSaved'), tr('alertArrivalSaved'));
     } finally {
       setSavingArrival(false);
@@ -388,6 +415,12 @@ export function SettingsScreen() {
           onColorChange={(color) => setDraftRemote((prev) => ({ ...prev, color }))}
           onHourChange={(hour) => setDraftRemote((prev) => ({ ...prev, hour }))}
           onMinuteChange={(minute) => setDraftRemote((prev) => ({ ...prev, minute }))}
+          tr={tr}
+        />
+        <ArrivalColorOnlyEditor
+          title={tr('arrivalVacation')}
+          color={draftVacationColor}
+          onColorChange={setDraftVacationColor}
           tr={tr}
         />
         <View style={styles.saveBreakRow}>

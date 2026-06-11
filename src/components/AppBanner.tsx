@@ -12,7 +12,6 @@ type TabIconName = keyof typeof MaterialCommunityIcons.glyphMap;
 const TAB_CONFIG: Record<string, { icon: TabIconName; activeColor: string }> = {
   WorkDate: { icon: 'calendar-month', activeColor: '#1976D2' },
   CommuteTime: { icon: 'clock-outline', activeColor: '#4CAF50' },
-  GoogleCalendar: { icon: 'google', activeColor: '#1976D2' },
   AttendanceHistory: { icon: 'clipboard-text-outline', activeColor: '#1976D2' },
   Settings: { icon: 'cog-outline', activeColor: '#616161' },
 };

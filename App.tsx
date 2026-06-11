@@ -8,7 +8,6 @@ import { LanguageProvider, useLanguage } from './src/context/LanguageContext';
 import { BannerTabBar } from './src/components/AppBanner';
 import { WorkDateScreen } from './src/screens/WorkDateScreen';
 import { CommuteTimeScreen } from './src/screens/CommuteTimeScreen';
-import { GoogleCalendarScreen } from './src/screens/GoogleCalendarScreen';
 import { AttendanceHistoryScreen } from './src/screens/AttendanceHistoryScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 
@@ -28,7 +27,6 @@ function AppTabs() {
     >
       <Tab.Screen name="WorkDate" component={WorkDateScreen} options={{ title: tr('tabWorkDate') }} />
       <Tab.Screen name="CommuteTime" component={CommuteTimeScreen} options={{ title: tr('tabCommuteTime') }} />
-      <Tab.Screen name="GoogleCalendar" component={GoogleCalendarScreen} options={{ title: tr('tabGoogleCalendar') }} />
       <Tab.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} options={{ title: tr('tabAttendanceHistory') }} />
       <Tab.Screen name="Settings" component={SettingsScreen} options={{ title: tr('tabSettings') }} />
     </Tab.Navigator>

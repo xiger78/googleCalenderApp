@@ -80,6 +80,7 @@ function typeLabelFor(
 ): string {
   if (dayType === 'office') return tr('office');
   if (dayType === 'remote') return tr('remote');
+  if (dayType === 'vacation') return tr('arrivalVacation');
   return tr('holidayLabel');
 }
 
@@ -176,6 +177,7 @@ export function CommuteTimeScreen() {
     earlyArrival,
     lateArrival,
     remoteArrival,
+    vacationArrival,
     tr,
   } = useLanguage();
 
@@ -185,8 +187,9 @@ export function CommuteTimeScreen() {
       early: earlyArrival,
       late: lateArrival,
       remote: remoteArrival,
+      vacation: vacationArrival,
     }),
-    [normalArrival, earlyArrival, lateArrival, remoteArrival]
+    [normalArrival, earlyArrival, lateArrival, remoteArrival, vacationArrival]
   );
   const totalBreakMinutes = lunchBreakMinutes + eveningBreakMinutes;
   const bulkApplyDays = getBulkApplyDateKeys(year, month);
@@ -383,7 +386,10 @@ export function CommuteTimeScreen() {
               dateKey={dateKey}
               dayType={dayType}
               rowColors={rowColors}
-              canChangeType={canChangeHolidayWorkType(dateKey, data.workDays)}
+              canChangeType={
+                canChangeHolidayWorkType(dateKey, data.workDays) &&
+                data.workDayTypes[dateKey] !== 'vacation'
+              }
               draft={getDraftForDate(dateKey)}
               onUpdatePart={updateDraftPart}
               onChangeWorkType={handleChangeWorkType}

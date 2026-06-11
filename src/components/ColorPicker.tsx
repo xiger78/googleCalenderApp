@@ -36,10 +36,10 @@ export function ColorPicker({ value, onChange }: Props) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: 10, marginTop: 4, marginBottom: 8 },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 4, marginBottom: 8 },
   swatch: {
-    width: 36,
-    height: 36,
+    width: 34,
+    height: 34,
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',

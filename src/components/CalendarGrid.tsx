@@ -9,8 +9,6 @@ import { useLanguage } from '../context/LanguageContext';
 import { getWeekdays } from '../i18n/translations';
 import { isJapaneseHoliday } from '../utils/japaneseHolidays';
 
-const HOLIDAY_COLOR = '#EF5350';
-
 interface Props {
   year: number;
   month: number;
@@ -80,11 +78,7 @@ export function CalendarGrid({
           const selected = selectedDates.includes(dateKey);
           const holiday = isJapaneseHoliday(dateKey);
           const dow = (firstDay + day - 1) % 7;
-          const circleBg = selected
-            ? dateColors[dateKey]
-            : holiday
-              ? HOLIDAY_COLOR
-              : undefined;
+          const circleBg = selected ? dateColors[dateKey] : undefined;
 
           return (
             <TouchableOpacity
@@ -98,8 +92,7 @@ export function CalendarGrid({
                   style={[
                     styles.dayText,
                     selected && styles.selectedText,
-                    holiday && !selected && styles.holidayText,
-                    dow === 0 && !selected && !holiday && styles.sunday,
+                    (holiday || dow === 0) && !selected && styles.sunday,
                     dow === 6 && !selected && !holiday && styles.saturday,
                   ]}
                 >
@@ -118,8 +111,7 @@ export function CalendarGrid({
           </View>
         ))}
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: HOLIDAY_COLOR }]} />
-          <Text style={styles.legendText}>{tr('legendHoliday')}</Text>
+          <Text style={styles.legendHolidayText}>{tr('legendHoliday')}</Text>
         </View>
       </View>
       <Text style={styles.hint}>{tr('calendarHint')}</Text>
@@ -168,10 +160,6 @@ const styles = StyleSheet.create({
     color: '#1B5E20',
     fontWeight: '700',
   },
-  holidayText: {
-    color: '#fff',
-    fontWeight: '700',
-  },
   legendRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -193,6 +181,11 @@ const styles = StyleSheet.create({
   legendText: {
     fontSize: 13,
     color: '#555',
+  },
+  legendHolidayText: {
+    fontSize: 13,
+    color: '#e53935',
+    fontWeight: '600',
   },
   sunday: {
     color: '#e53935',

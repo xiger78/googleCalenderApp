@@ -19,6 +19,7 @@ export interface AppSettings {
   earlyArrival: ArrivalTypeConfig;
   lateArrival: ArrivalTypeConfig;
   remoteArrival: ArrivalTypeConfig;
+  vacationArrival: ArrivalTypeConfig;
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -29,6 +30,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   earlyArrival: DEFAULT_ARRIVAL_CONFIGS.early,
   lateArrival: DEFAULT_ARRIVAL_CONFIGS.late,
   remoteArrival: DEFAULT_ARRIVAL_CONFIGS.remote,
+  vacationArrival: DEFAULT_ARRIVAL_CONFIGS.vacation,
 };
 
 export function getArrivalConfig(
@@ -38,5 +40,6 @@ export function getArrivalConfig(
   if (type === 'early') return settings.earlyArrival;
   if (type === 'late') return settings.lateArrival;
   if (type === 'remote') return settings.remoteArrival;
+  if (type === 'vacation') return settings.vacationArrival;
   return settings.normalArrival;
 }

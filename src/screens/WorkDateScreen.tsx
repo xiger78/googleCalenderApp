@@ -8,7 +8,7 @@ import { getWorkDaysInMonth } from '../utils/storage';
 import { WorkArrivalType } from '../types';
 import { getArrivalColorHex } from '../utils/arrivalSettings';
 
-const ARRIVAL_MODES: WorkArrivalType[] = ['normal', 'early', 'late', 'remote'];
+const ARRIVAL_MODES: WorkArrivalType[] = ['normal', 'early', 'late', 'remote', 'vacation'];
 
 export function WorkDateScreen() {
   const now = new Date();
@@ -16,7 +16,8 @@ export function WorkDateScreen() {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [selectedMode, setSelectedMode] = useState<WorkArrivalType>('normal');
   const { data, setWorkDayArrival, clearWorkDay } = useWorkDataContext();
-  const { tr, normalArrival, earlyArrival, lateArrival, remoteArrival } = useLanguage();
+  const { tr, normalArrival, earlyArrival, lateArrival, remoteArrival, vacationArrival } =
+    useLanguage();
 
   const monthWorkDays = getWorkDaysInMonth(data.workDays, year, month);
 
@@ -26,8 +27,9 @@ export function WorkDateScreen() {
       early: earlyArrival,
       late: lateArrival,
       remote: remoteArrival,
+      vacation: vacationArrival,
     }),
-    [normalArrival, earlyArrival, lateArrival, remoteArrival]
+    [normalArrival, earlyArrival, lateArrival, remoteArrival, vacationArrival]
   );
 
   const dateColors = useMemo(() => {
@@ -44,6 +46,7 @@ export function WorkDateScreen() {
     if (type === 'early') return tr('arrivalEarly');
     if (type === 'late') return tr('arrivalLate');
     if (type === 'remote') return tr('arrivalRemote');
+    if (type === 'vacation') return tr('arrivalVacation');
     return tr('arrivalNormal');
   };
 
@@ -141,9 +144,9 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   modeBtn: {
-    width: '48%',
-    paddingVertical: 12,
-    paddingHorizontal: 6,
+    width: '31%',
+    paddingVertical: 10,
+    paddingHorizontal: 4,
     borderRadius: 10,
     alignItems: 'center',
     borderWidth: 2,
@@ -153,7 +156,7 @@ const styles = StyleSheet.create({
     borderColor: '#333',
   },
   modeBtnText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     color: '#333',
     textAlign: 'center',

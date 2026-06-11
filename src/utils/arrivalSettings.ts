@@ -7,15 +7,23 @@ export const ARRIVAL_COLOR_HEX: Record<ArrivalColor, string> = {
   yellow: '#FFF176',
   blue: '#90CAF9',
   red: '#EF9A9A',
+  orange: '#FFCC80',
 };
 
-export const ARRIVAL_COLOR_OPTIONS: ArrivalColor[] = ['green', 'yellow', 'blue', 'red'];
+export const ARRIVAL_COLOR_OPTIONS: ArrivalColor[] = [
+  'green',
+  'yellow',
+  'blue',
+  'red',
+  'orange',
+];
 
 export const ARRIVAL_BORDER_HEX: Record<ArrivalColor, string> = {
   green: '#81C784',
   yellow: '#FDD835',
   blue: '#64B5F6',
   red: '#E57373',
+  orange: '#FFB74D',
 };
 
 export const HOLIDAY_EMPTY_ROW_COLORS = {
@@ -28,6 +36,7 @@ export const DEFAULT_ARRIVAL_CONFIGS: Record<WorkArrivalType, ArrivalTypeConfig>
   early: { color: 'yellow', clockIn: '06:00' },
   late: { color: 'blue', clockIn: '11:00' },
   remote: { color: 'blue', clockIn: '08:40' },
+  vacation: { color: 'orange', clockIn: '00:00' },
 };
 
 export const WORK_HOURS_PER_DAY = 8;

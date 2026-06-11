@@ -44,10 +44,17 @@ export function useWorkData() {
       const workDays = data.workDays.includes(dateKey)
         ? data.workDays
         : [...data.workDays, dateKey].sort();
-      const times = configToCommuteTimes(config);
+      const times =
+        arrivalType === 'vacation'
+          ? { clockIn: '', clockOut: '' }
+          : configToCommuteTimes(config);
       const holidayWorkTypes = { ...data.holidayWorkTypes };
       if (isNonWorkingDay(dateKey)) {
-        holidayWorkTypes[dateKey] = arrivalType === 'remote' ? 'remote' : 'office';
+        if (arrivalType === 'remote') {
+          holidayWorkTypes[dateKey] = 'remote';
+        } else if (arrivalType !== 'vacation') {
+          holidayWorkTypes[dateKey] = 'office';
+        }
       }
       await persist({
         ...data,

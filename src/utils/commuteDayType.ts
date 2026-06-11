@@ -1,7 +1,7 @@
 import { WorkArrivalType } from '../types';
 import { isNonWorkingDay } from './japaneseHolidays';
 
-export type CommuteDayType = 'office' | 'remote' | 'holiday';
+export type CommuteDayType = 'office' | 'remote' | 'holiday' | 'vacation';
 export type HolidayWorkType = 'office' | 'remote';
 
 export function getCommuteDayType(
@@ -13,6 +13,8 @@ export function getCommuteDayType(
   const isWorkDay = workDays.includes(dateKey);
   const isOff = isNonWorkingDay(dateKey);
   const arrivalType = workDayTypes[dateKey];
+
+  if (arrivalType === 'vacation') return 'vacation';
 
   if (isOff) {
     if (!isWorkDay) return 'holiday';
