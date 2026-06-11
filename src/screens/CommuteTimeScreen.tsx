@@ -42,6 +42,37 @@ type PreviewItem = {
   line: string;
 };
 
+type DayTimeDraft = {
+  clockInHour: string;
+  clockInMinute: string;
+  clockOutHour: string;
+  clockOutMinute: string;
+};
+
+function draftFromCommuteTime(times?: CommuteTime): DayTimeDraft {
+  const clockIn = parseTime(times?.clockIn ?? '');
+  const clockOut = parseTime(times?.clockOut ?? '');
+  return {
+    clockInHour: clockIn.hour,
+    clockInMinute: clockIn.minute,
+    clockOutHour: clockOut.hour,
+    clockOutMinute: clockOut.minute,
+  };
+}
+
+function draftToCommuteTime(parts: DayTimeDraft): CommuteTime {
+  const hasClockIn = Boolean(parts.clockInHour || parts.clockInMinute);
+  const hasClockOut = Boolean(parts.clockOutHour || parts.clockOutMinute);
+  return {
+    clockIn: hasClockIn
+      ? formatTime(parts.clockInHour || '0', parts.clockInMinute || '0')
+      : '',
+    clockOut: hasClockOut
+      ? formatTime(parts.clockOutHour || '0', parts.clockOutMinute || '0')
+      : '',
+  };
+}
+
 function typeLabelFor(
   tr: (key: TranslationKey, params?: Record<string, string | number>) => string,
   dayType: CommuteDayType
@@ -61,8 +92,8 @@ function DayTimeRow({
   dateKey,
   dayType,
   canChangeType,
-  times,
-  onUpdateTime,
+  draft,
+  onUpdatePart,
   onChangeWorkType,
   tr,
   weekdays,
@@ -70,19 +101,12 @@ function DayTimeRow({
   dateKey: string;
   dayType: CommuteDayType;
   canChangeType: boolean;
-  times: CommuteTime;
-  onUpdateTime: (
-    dateKey: string,
-    field: 'clockIn' | 'clockOut',
-    part: 'hour' | 'minute',
-    value: string
-  ) => void;
+  draft: DayTimeDraft;
+  onUpdatePart: (dateKey: string, field: keyof DayTimeDraft, value: string) => void;
   onChangeWorkType: (dateKey: string, workType: HolidayWorkType) => void;
   tr: (key: TranslationKey, params?: Record<string, string | number>) => string;
   weekdays: string[];
 }) {
-  const clockIn = parseTime(times.clockIn);
-  const clockOut = parseTime(times.clockOut);
   const typeLabel = typeLabelFor(tr, dayType);
   const dateLabel = formatDateWithTypeLabel(dateKey, weekdays, typeLabel);
 
@@ -114,14 +138,14 @@ function DayTimeRow({
       )}
       <TimeRangeInput
         compact
-        clockInHour={clockIn.hour || '00'}
-        clockInMinute={clockIn.minute || '00'}
-        clockOutHour={clockOut.hour || '00'}
-        clockOutMinute={clockOut.minute || '00'}
-        onClockInHourChange={(v) => onUpdateTime(dateKey, 'clockIn', 'hour', v)}
-        onClockInMinuteChange={(v) => onUpdateTime(dateKey, 'clockIn', 'minute', v)}
-        onClockOutHourChange={(v) => onUpdateTime(dateKey, 'clockOut', 'hour', v)}
-        onClockOutMinuteChange={(v) => onUpdateTime(dateKey, 'clockOut', 'minute', v)}
+        clockInHour={draft.clockInHour}
+        clockInMinute={draft.clockInMinute}
+        clockOutHour={draft.clockOutHour}
+        clockOutMinute={draft.clockOutMinute}
+        onClockInHourChange={(v) => onUpdatePart(dateKey, 'clockInHour', v)}
+        onClockInMinuteChange={(v) => onUpdatePart(dateKey, 'clockInMinute', v)}
+        onClockOutHourChange={(v) => onUpdatePart(dateKey, 'clockOutHour', v)}
+        onClockOutMinuteChange={(v) => onUpdatePart(dateKey, 'clockOutMinute', v)}
       />
     </View>
   );
@@ -137,7 +161,7 @@ export function CommuteTimeScreen() {
   const [clockOutHour, setClockOutHour] = useState('18');
   const [clockOutMinute, setClockOutMinute] = useState('00');
 
-  const [draftTimes, setDraftTimes] = useState<Record<string, CommuteTime>>({});
+  const [draftParts, setDraftParts] = useState<Record<string, DayTimeDraft>>({});
   const [preview, setPreview] = useState<PreviewItem[]>([]);
   const [previewTotalHours, setPreviewTotalHours] = useState<string | null>(null);
 
@@ -148,31 +172,20 @@ export function CommuteTimeScreen() {
   const daysInMonth = getDaysInMonth(year, month);
   const weekdays = getWeekdays(language);
 
-  const getTimeForDate = (dateKey: string): CommuteTime => {
-    return draftTimes[dateKey] ?? data.commuteTimes[dateKey] ?? { clockIn: '', clockOut: '' };
+  const getDraftForDate = (dateKey: string): DayTimeDraft => {
+    return draftParts[dateKey] ?? draftFromCommuteTime(data.commuteTimes[dateKey]);
   };
 
-  const updateDraft = (dateKey: string, field: 'clockIn' | 'clockOut', value: string) => {
-    const current = getTimeForDate(dateKey);
-    setDraftTimes((prev) => ({ ...prev, [dateKey]: { ...current, [field]: value } }));
-  };
-
-  const updateTimePart = (
-    dateKey: string,
-    field: 'clockIn' | 'clockOut',
-    part: 'hour' | 'minute',
-    value: string
-  ) => {
-    const current = getTimeForDate(dateKey);
-    const parsed = parseTime(current[field]);
-    const hour = part === 'hour' ? value : parsed.hour;
-    const minute = part === 'minute' ? value : parsed.minute;
-
-    if (!hour && !minute) {
-      updateDraft(dateKey, field, '');
-      return;
+  const getCommuteTimeForDate = (dateKey: string): CommuteTime => {
+    if (draftParts[dateKey]) {
+      return draftToCommuteTime(draftParts[dateKey]);
     }
-    updateDraft(dateKey, field, formatTime(hour || '0', minute || '0'));
+    return data.commuteTimes[dateKey] ?? { clockIn: '', clockOut: '' };
+  };
+
+  const updateDraftPart = (dateKey: string, field: keyof DayTimeDraft, value: string) => {
+    const current = getDraftForDate(dateKey);
+    setDraftParts((prev) => ({ ...prev, [dateKey]: { ...current, [field]: value } }));
   };
 
   const handleChangeWorkType = async (dateKey: string, workType: HolidayWorkType) => {
@@ -193,14 +206,16 @@ export function CommuteTimeScreen() {
       return;
     }
 
-    const clockIn = formatTime(clockInHour, clockInMinute);
-    const clockOut = formatTime(clockOutHour, clockOutMinute);
-    const next = { ...draftTimes };
+    const next = { ...draftParts };
     bulkApplyDays.forEach((dateKey) => {
-      const current = getTimeForDate(dateKey);
-      next[dateKey] = { ...current, clockIn, clockOut };
+      next[dateKey] = {
+        clockInHour: clockInHour,
+        clockInMinute: clockInMinute,
+        clockOutHour: clockOutHour,
+        clockOutMinute: clockOutMinute,
+      };
     });
-    setDraftTimes(next);
+    setDraftParts(next);
     Alert.alert(
       tr('alertDone'),
       tr('alertBulkClockIn', { month, count: bulkApplyDays.length })
@@ -213,31 +228,40 @@ export function CommuteTimeScreen() {
     );
 
     const zeroTime: CommuteTime = { clockIn: '00:00', clockOut: '00:00' };
+    const zeroDraft: DayTimeDraft = {
+      clockInHour: '00',
+      clockInMinute: '00',
+      clockOutHour: '00',
+      clockOutMinute: '00',
+    };
     const nextCommute = { ...data.commuteTimes };
-    const nextDraft: Record<string, CommuteTime> = {};
+    const nextDraft: Record<string, DayTimeDraft> = {};
 
     allDays.forEach((dateKey) => {
       nextCommute[dateKey] = zeroTime;
-      nextDraft[dateKey] = zeroTime;
+      nextDraft[dateKey] = zeroDraft;
     });
 
     setClockInHour('00');
     setClockInMinute('00');
     setClockOutHour('00');
     setClockOutMinute('00');
-    setDraftTimes(nextDraft);
+    setDraftParts(nextDraft);
     setPreview([]);
     setPreviewTotalHours(null);
     await setCommuteTimes(nextCommute);
   };
 
   const handleSave = async () => {
-    const merged = { ...data.commuteTimes, ...draftTimes };
+    const merged = { ...data.commuteTimes };
+    Object.entries(draftParts).forEach(([dateKey, parts]) => {
+      merged[dateKey] = draftToCommuteTime(parts);
+    });
 
     const timeEntries: { clockIn: string; clockOut: string }[] = [];
     const savedList: PreviewItem[] = Array.from({ length: daysInMonth }, (_, i) => {
       const dateKey = formatDateKey(year, month, i + 1);
-      const times = merged[dateKey];
+      const times = merged[dateKey] ?? getCommuteTimeForDate(dateKey);
       if (!times?.clockIn && !times?.clockOut) return null;
       const clockIn = times.clockIn ?? '--:--';
       const clockOut = times.clockOut ?? '--:--';
@@ -254,7 +278,7 @@ export function CommuteTimeScreen() {
     await setCommuteTimes(merged);
     setPreview(savedList);
     setPreviewTotalHours(formatTotalWorkHoursDecimal(totalMinutes));
-    setDraftTimes({});
+    setDraftParts({});
     Alert.alert(tr('alertSaved'), tr('alertCommuteSaved'));
   };
 
@@ -263,7 +287,11 @@ export function CommuteTimeScreen() {
   );
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
+    >
       <View style={styles.titleRow}>
         <View style={styles.titleLeft}>
           <MaterialCommunityIcons name="clock-outline" size={22} color="#1976D2" />
@@ -323,8 +351,8 @@ export function CommuteTimeScreen() {
               dateKey={dateKey}
               dayType={dayType}
               canChangeType={canChangeHolidayWorkType(dateKey, data.workDays)}
-              times={getTimeForDate(dateKey)}
-              onUpdateTime={updateTimePart}
+              draft={getDraftForDate(dateKey)}
+              onUpdatePart={updateDraftPart}
               onChangeWorkType={handleChangeWorkType}
               tr={tr}
               weekdays={weekdays}
