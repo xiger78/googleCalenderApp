@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -35,7 +35,8 @@ import {
   getWorkHoursParenthetical,
   sumWorkMinutes,
 } from '../utils/workDuration';
-import { CommuteTime, HolidayWorkType } from '../types';
+import { ArrivalTypeConfig, CommuteTime, HolidayWorkType, WorkArrivalType } from '../types';
+import { getCommuteRowColors } from '../utils/arrivalSettings';
 
 type PreviewItem = {
   dateKey: string;
@@ -82,15 +83,10 @@ function typeLabelFor(
   return tr('holidayLabel');
 }
 
-function rowStyleFor(dayType: CommuteDayType) {
-  if (dayType === 'office') return styles.officeRow;
-  if (dayType === 'remote') return styles.remoteRow;
-  return styles.holidayRow;
-}
-
 function DayTimeRow({
   dateKey,
   dayType,
+  rowColors,
   canChangeType,
   draft,
   onUpdatePart,
@@ -100,6 +96,7 @@ function DayTimeRow({
 }: {
   dateKey: string;
   dayType: CommuteDayType;
+  rowColors: { backgroundColor: string; borderColor: string };
   canChangeType: boolean;
   draft: DayTimeDraft;
   onUpdatePart: (dateKey: string, field: keyof DayTimeDraft, value: string) => void;
@@ -125,7 +122,12 @@ function DayTimeRow({
   };
 
   return (
-    <View style={[styles.dayCard, rowStyleFor(dayType)]}>
+    <View
+      style={[
+        styles.dayCard,
+        { backgroundColor: rowColors.backgroundColor, borderColor: rowColors.borderColor },
+      ]}
+    >
       {canChangeType ? (
         <TouchableOpacity onPress={openTypePicker} activeOpacity={0.7}>
           <View style={styles.dateLabelRow}>
@@ -166,7 +168,26 @@ export function CommuteTimeScreen() {
   const [previewTotalHours, setPreviewTotalHours] = useState<string | null>(null);
 
   const { data, setCommuteTimes, setHolidayWorkType } = useWorkDataContext();
-  const { language, lunchBreakMinutes, eveningBreakMinutes, tr } = useLanguage();
+  const {
+    language,
+    lunchBreakMinutes,
+    eveningBreakMinutes,
+    normalArrival,
+    earlyArrival,
+    lateArrival,
+    remoteArrival,
+    tr,
+  } = useLanguage();
+
+  const arrivalConfigs = useMemo<Record<WorkArrivalType, ArrivalTypeConfig>>(
+    () => ({
+      normal: normalArrival,
+      early: earlyArrival,
+      late: lateArrival,
+      remote: remoteArrival,
+    }),
+    [normalArrival, earlyArrival, lateArrival, remoteArrival]
+  );
   const totalBreakMinutes = lunchBreakMinutes + eveningBreakMinutes;
   const bulkApplyDays = getBulkApplyDateKeys(year, month);
   const daysInMonth = getDaysInMonth(year, month);
@@ -350,11 +371,18 @@ export function CommuteTimeScreen() {
             data.holidayWorkTypes,
             data.workDayTypes
           );
+          const rowColors = getCommuteRowColors(
+            dateKey,
+            data.workDays,
+            data.workDayTypes,
+            arrivalConfigs
+          );
           return (
             <DayTimeRow
               key={dateKey}
               dateKey={dateKey}
               dayType={dayType}
+              rowColors={rowColors}
               canChangeType={canChangeHolidayWorkType(dateKey, data.workDays)}
               draft={getDraftForDate(dateKey)}
               onUpdatePart={updateDraftPart}
@@ -441,9 +469,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: 10,
   },
-  officeRow: { backgroundColor: '#F1F8E9', borderColor: '#C8E6C9' },
-  remoteRow: { backgroundColor: '#E3F2FD', borderColor: '#BBDEFB' },
-  holidayRow: { backgroundColor: '#FCE4EC', borderColor: '#F8BBD0' },
   dateLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   dateLabel: { fontSize: 14, fontWeight: '700', color: '#333' },
   saveRow: { marginTop: 20 },

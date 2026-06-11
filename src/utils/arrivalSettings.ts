@@ -1,5 +1,6 @@
 import { ArrivalColor, ArrivalTypeConfig, WorkArrivalType } from '../types';
 import { formatTime, parseTime } from './dateUtils';
+import { isNonWorkingDay } from './japaneseHolidays';
 
 export const ARRIVAL_COLOR_HEX: Record<ArrivalColor, string> = {
   green: '#A5D6A7',
@@ -9,6 +10,18 @@ export const ARRIVAL_COLOR_HEX: Record<ArrivalColor, string> = {
 };
 
 export const ARRIVAL_COLOR_OPTIONS: ArrivalColor[] = ['green', 'yellow', 'blue', 'red'];
+
+export const ARRIVAL_BORDER_HEX: Record<ArrivalColor, string> = {
+  green: '#81C784',
+  yellow: '#FDD835',
+  blue: '#64B5F6',
+  red: '#E57373',
+};
+
+export const HOLIDAY_EMPTY_ROW_COLORS = {
+  backgroundColor: '#EEEEEE',
+  borderColor: '#BDBDBD',
+};
 
 export const DEFAULT_ARRIVAL_CONFIGS: Record<WorkArrivalType, ArrivalTypeConfig> = {
   normal: { color: 'green', clockIn: '08:40' },
@@ -44,4 +57,27 @@ export function configToCommuteTimes(config: ArrivalTypeConfig): {
 export function parseClockInToDraft(clockIn: string): { hour: string; minute: string } {
   const parsed = parseTime(clockIn);
   return { hour: parsed.hour, minute: parsed.minute };
+}
+
+export function getCommuteRowColors(
+  dateKey: string,
+  workDays: string[],
+  workDayTypes: Record<string, WorkArrivalType>,
+  configs: Record<WorkArrivalType, ArrivalTypeConfig>
+): { backgroundColor: string; borderColor: string } {
+  const isWorkDay = workDays.includes(dateKey);
+
+  if (isNonWorkingDay(dateKey) && !isWorkDay) {
+    return HOLIDAY_EMPTY_ROW_COLORS;
+  }
+
+  const arrivalType: WorkArrivalType = isWorkDay
+    ? (workDayTypes[dateKey] ?? 'normal')
+    : 'remote';
+  const colorKey = configs[arrivalType].color;
+
+  return {
+    backgroundColor: getArrivalColorHex(colorKey),
+    borderColor: ARRIVAL_BORDER_HEX[colorKey],
+  };
 }
