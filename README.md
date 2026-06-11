@@ -112,6 +112,17 @@ The app features a **cute top banner** with **six link-button menus overlaid on 
 
 Shows special notes entered on office days as a date card list.
 
+**How to use:**
+- Only dates marked as office days in **Dates** with a saved memo in **Times** are shown
+- Format: `YYYY/MM/DD(weekday):arrival type(clock-in)` / `Memo:text`
+- Clock-in uses saved commute time first, otherwise the arrival type default from Settings
+- Example:
+```
+2026/06/11(Thu):Normal(09:00)
+Memo:Release work for blended data update
+```
+- Newest dates appear at the top
+
 ![Alerts](docs/images/en/screen-notifications.png)
 
 ---
@@ -242,7 +253,7 @@ Choose **Japanese · Chinese · Korean · English** (in that order). All screens
 | Item | Description |
 |------|-------------|
 | Menu layout | **Alerts · Dates · Times · History · Holidays · Settings** (6 tabs) |
-| Alerts tab | Shows **memos** on office days as `YYYY/MM/DD(weekday):type` / `Memo:text` |
+| Alerts tab | Shows **memos** as `YYYY/MM/DD(weekday):type(clock-in)` / `Memo:text` |
 | Year Holidays tab | Japanese holidays by year/month with calendar (substitute & citizens' holidays) |
 | Per-day memo | **Memo** field on each date in Commute Times for special notes |
 | Display language | **Japanese · Chinese · Korean · English** (same order in Settings) |

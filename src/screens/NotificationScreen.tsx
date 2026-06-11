@@ -5,7 +5,7 @@ import { useWorkDataContext } from '../context/WorkDataContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatSlashDateWithWeekday } from '../utils/dateUtils';
 import { getWeekdays, TranslationKey } from '../i18n/translations';
-import { WorkArrivalType } from '../types';
+import { ArrivalTypeConfig, WorkArrivalType } from '../types';
 
 type NotificationItem = {
   dateKey: string;
@@ -24,10 +24,41 @@ function arrivalTypeLabel(
   return tr('arrivalNormal');
 }
 
+function clockInForDate(
+  dateKey: string,
+  arrivalType: WorkArrivalType,
+  commuteTimes: Record<string, { clockIn?: string; clockOut?: string }>,
+  arrivalConfigs: Record<WorkArrivalType, ArrivalTypeConfig>
+): string {
+  const saved = commuteTimes[dateKey]?.clockIn?.trim();
+  if (saved) return saved;
+  if (arrivalType === 'vacation') return '--:--';
+  return arrivalConfigs[arrivalType].clockIn || '--:--';
+}
+
 export function NotificationScreen() {
   const { data } = useWorkDataContext();
-  const { language, tr } = useLanguage();
+  const {
+    language,
+    tr,
+    normalArrival,
+    earlyArrival,
+    lateArrival,
+    remoteArrival,
+    vacationArrival,
+  } = useLanguage();
   const weekdays = getWeekdays(language);
+
+  const arrivalConfigs = useMemo<Record<WorkArrivalType, ArrivalTypeConfig>>(
+    () => ({
+      normal: normalArrival,
+      early: earlyArrival,
+      late: lateArrival,
+      remote: remoteArrival,
+      vacation: vacationArrival,
+    }),
+    [normalArrival, earlyArrival, lateArrival, remoteArrival, vacationArrival]
+  );
 
   const items = useMemo<NotificationItem[]>(() => {
     return data.workDays
@@ -39,13 +70,28 @@ export function NotificationScreen() {
       .map((dateKey) => {
         const arrivalType = data.workDayTypes[dateKey] ?? 'normal';
         const dateLabel = formatSlashDateWithWeekday(dateKey, weekdays);
+        const clockIn = clockInForDate(
+          dateKey,
+          arrivalType,
+          data.commuteTimes,
+          arrivalConfigs
+        );
         return {
           dateKey,
-          dateLine: `${dateLabel}:${arrivalTypeLabel(tr, arrivalType)}`,
+          dateLine: `${dateLabel}:${arrivalTypeLabel(tr, arrivalType)}(${clockIn})`,
           memo: data.dayMemos[dateKey].trim(),
         };
       });
-  }, [data.workDays, data.dayMemos, data.workDayTypes, weekdays, tr, language]);
+  }, [
+    data.workDays,
+    data.dayMemos,
+    data.workDayTypes,
+    data.commuteTimes,
+    arrivalConfigs,
+    weekdays,
+    tr,
+    language,
+  ]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
