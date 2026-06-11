@@ -77,13 +77,13 @@ npm start               # Expo 개발 서버
 
 ```bash
 npm run build:apk
-# 출력: dist/출퇴근관리-v1.0.0.apk
+# 출력: dist/出退勤管理-v1.0.0.apk
 ```
 
 저장소에 빌드된 APK 파일도 포함되어 있습니다:
 
 ```
-dist/출퇴근관리-v1.0.0.apk
+dist/出退勤管理-v1.0.0.apk
 ```
 
 ---
@@ -254,7 +254,7 @@ Google 계정을 연동합니다.
 | 시간 입력 UI | 날짜별 컴팩트 **HH시 MM분** 입력 방식 |
 | 구글등록 화면 | 계정 선택/변경만 제공 (등록 버튼·일정 목록 제거) |
 | 설정 탭 | 화면표시언어, 근태장표 CSV 출력, 메일 보내기(첨부파일) 추가 |
-| APK 제공 | 저장소 `dist/출퇴근관리-v1.0.0.apk` 에 빌드 파일 포함 |
+| APK 제공 | 저장소 `dist/出退勤管理-v1.0.0.apk` 에 빌드 파일 포함 |
 | 공휴일·유형 | `src/utils/japaneseHolidays.ts`, `src/utils/commuteDayType.ts`, `src/utils/workDuration.ts` |
 | 앱 레이아웃 | 상단 **귀여운 배너** + 배너 위 **링크 버튼 메뉴** |
 | 메뉴 이름 | **날짜지정 · 출퇴시간 · 구글등록 · 이력확인 · 설정** |

@@ -26,7 +26,7 @@ cd android
 ./gradlew assembleRelease
 
 APK_SRC="app/build/outputs/apk/release/app-release.apk"
-APK_DST="$ROOT/dist/출퇴근관리-v1.0.0.apk"
+APK_DST="$ROOT/dist/出退勤管理-v1.0.0.apk"
 mkdir -p "$ROOT/dist"
 cp "$APK_SRC" "$APK_DST"
 

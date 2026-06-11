@@ -77,13 +77,13 @@ npm start               # Expo dev server
 
 ```bash
 npm run build:apk
-# Output: dist/출퇴근관리-v1.0.0.apk
+# Output: dist/出退勤管理-v1.0.0.apk
 ```
 
 A pre-built APK is also committed in the repository:
 
 ```
-dist/출퇴근관리-v1.0.0.apk
+dist/出退勤管理-v1.0.0.apk
 ```
 
 ---
@@ -254,7 +254,7 @@ Choose **Japanese**, **Korean**, or **English**. All screens update immediately.
 | Time input UI | Per-day editing uses compact **HH:MM** inputs |
 | Google screen | Account select/change only (register button and schedule lists removed) |
 | Settings tab | Display language, attendance CSV export, email with attachments |
-| APK download | Pre-built APK available at `dist/출퇴근관리-v1.0.0.apk` in the repository |
+| APK download | Pre-built APK available at `dist/出退勤管理-v1.0.0.apk` in the repository |
 | Holiday logic | `src/utils/japaneseHolidays.ts`, `src/utils/commuteDayType.ts`, `src/utils/workDuration.ts` |
 | App layout | **Cute top banner** + **link-button navigation on banner** |
 | Menu labels | Shortened to **Dates · Times · Google · History · Settings** |
