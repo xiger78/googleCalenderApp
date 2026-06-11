@@ -9,6 +9,7 @@ export function useWorkData() {
   const [data, setData] = useState<WorkData>({
     workDays: [],
     commuteTimes: {},
+    dayMemos: {},
     holidayWorkTypes: {},
     workDayTypes: {},
   });
@@ -30,12 +31,14 @@ export function useWorkData() {
     async (dateKey: string) => {
       const workDays = data.workDays.filter((d) => d !== dateKey);
       const commuteTimes = { ...data.commuteTimes };
+      const dayMemos = { ...data.dayMemos };
       const holidayWorkTypes = { ...data.holidayWorkTypes };
       const workDayTypes = { ...data.workDayTypes };
       delete commuteTimes[dateKey];
+      delete dayMemos[dateKey];
       delete holidayWorkTypes[dateKey];
       delete workDayTypes[dateKey];
-      await persist({ ...data, workDays, commuteTimes, holidayWorkTypes, workDayTypes });
+      await persist({ ...data, workDays, commuteTimes, dayMemos, holidayWorkTypes, workDayTypes });
     },
     [data, persist]
   );
@@ -85,6 +88,13 @@ export function useWorkData() {
     [data, persist]
   );
 
+  const setDayMemos = useCallback(
+    async (dayMemos: WorkData['dayMemos']) => {
+      await persist({ ...data, dayMemos });
+    },
+    [data, persist]
+  );
+
   const setHolidayWorkType = useCallback(
     async (dateKey: string, workType: HolidayWorkType) => {
       await persist({
@@ -105,14 +115,16 @@ export function useWorkData() {
       const monthKeys = new Set(getMonthDateKeys(year, month));
       const workDays = data.workDays.filter((d) => !monthKeys.has(d));
       const commuteTimes = { ...data.commuteTimes };
+      const dayMemos = { ...data.dayMemos };
       const holidayWorkTypes = { ...data.holidayWorkTypes };
       const workDayTypes = { ...data.workDayTypes };
       monthKeys.forEach((dateKey) => {
         delete commuteTimes[dateKey];
+        delete dayMemos[dateKey];
         delete holidayWorkTypes[dateKey];
         delete workDayTypes[dateKey];
       });
-      await persist({ ...data, workDays, commuteTimes, holidayWorkTypes, workDayTypes });
+      await persist({ ...data, workDays, commuteTimes, dayMemos, holidayWorkTypes, workDayTypes });
     },
     [data, persist]
   );
@@ -125,6 +137,7 @@ export function useWorkData() {
     clearWorkDay,
     clearMonthWorkDays,
     setCommuteTimes,
+    setDayMemos,
     setHolidayWorkType,
     isWorkDay,
     persist,

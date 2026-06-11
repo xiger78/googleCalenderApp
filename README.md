@@ -102,11 +102,21 @@ The app runs on **Android 6.0 and above**. It is optimized for Android 14.
 
 ## Features
 
-The app features a **cute top banner** with **five link-button menus overlaid on the banner image**: **Dates · Times · Google · History · Settings**. The default display language is **Japanese** (configurable to Korean or English in Settings).
+The app features a **cute top banner** with **six link-button menus overlaid on the banner image**: **Alerts · Dates · Times · History · Holidays · Settings**. The default display language is **Japanese** (configurable to Chinese, Korean, or English in Settings).
+
+**Manuals in other languages:** [한국어](README_KO.md) · [日本語](README_JP.md) · [中文](README_ZH.md)
 
 ---
 
-### 1. Set Work Dates (出勤日指定)
+### 1. Alerts (Work Day Memos)
+
+Shows special notes entered on office days as a date card list.
+
+![Alerts](docs/images/en/screen-notifications.png)
+
+---
+
+### 2. Set Work Dates (出勤日指定)
 
 Select office attendance days on a monthly calendar.
 
@@ -121,7 +131,7 @@ Select office attendance days on a monthly calendar.
 
 ---
 
-### 2. Commute Times (出退勤時間入力)
+### 3. Commute Times (出退勤時間入力)
 
 Enter clock-in and clock-out times for each day of the selected month.
 
@@ -161,21 +171,6 @@ Enter clock-in and clock-out times for each day of the selected month.
 
 ---
 
-### 3. Google Calendar (Googleカレンダー連携)
-
-Connect a Google account for calendar integration.
-
-**How to use:**
-- Select year and month
-- Tap **Select Google Account** to sign in (or **Change Account** to switch)
-- A privacy note explains that you can choose the Google account on your device
-
-**Setup:** Set `EXPO_PUBLIC_GOOGLE_CLIENT_ID` in `.env` (see `.env.example`).
-
-![Google Calendar](docs/images/en/screen-google-calendar.png)
-
----
-
 ### 4. Attendance History (出勤履歴確認)
 
 View monthly attendance records.
@@ -198,14 +193,22 @@ View monthly attendance records.
 
 ---
 
-### 5. Settings (設定)
+### 5. Year Holidays (今年祝日)
 
-Display language, break time, attendance report (CSV), and email.
+View Japanese national holidays by year and month.
 
-#### 5-1. Display Language
-Choose **Japanese**, **Korean**, or **English**. All screens update immediately.
+![Year Holidays](docs/images/en/screen-year-holidays.png)
 
-#### 5-2. Break Time Settings (휴계시간 설정)
+---
+
+### 6. Settings (設定)
+
+Display language, arrival types, break time, attendance report (CSV), and email.
+
+#### 6-1. Display Language
+Choose **Japanese · Chinese · Korean · English** (in that order). All screens update immediately.
+
+#### 6-2. Break Time Settings (휴계시간 설정)
 - Card: **Break Time (Lunch, Dinner)** under category **Break Time Settings**
 - **Lunch break** (excluded from work hours) — default **1 hour** (`01:00`)
 - **Dinner break** (excluded from work hours) — default **0 hours** (`00:00`)
@@ -213,7 +216,7 @@ Choose **Japanese**, **Korean**, or **English**. All screens update immediately.
 - Opening the card loads the last saved values; tap the full-width **Save** button below the dinner field to apply both at once
 - Saved break times are subtracted when calculating work hours on History, save preview, and CSV export
 
-#### 5-3. Attendance Report (CSV) (근태장표출력(CSV))
+#### 6-3. Attendance Report (CSV) (근태장표출력(CSV))
 - Select export month
 - Tap the full-width **Export** button to generate and share a CSV file (uses break times from §5-2)
 
@@ -225,7 +228,7 @@ Choose **Japanese**, **Korean**, or **English**. All screens update immediately.
 [総勤務時間:160時間00分]
 ```
 
-#### 5-4. Send Email
+#### 6-4. Send Email
 - Enter recipient, subject, and body
 - Attach files (including exported CSV)
 - Tap the full-width **Send Email** button to open the device mail app
@@ -238,27 +241,22 @@ Choose **Japanese**, **Korean**, or **English**. All screens update immediately.
 
 | Item | Description |
 |------|-------------|
-| Default language | **Japanese** on first launch (changeable in Settings) |
-| Year/month picker | **Work Dates**, **Commute Times**, **History**, and **Google** screens share the same dropdown style |
-| Calendar holidays | Japanese holidays shown as **red circles** on the work-date calendar |
-| Commute day types | Weekends/holidays show **:Holiday** (not Remote) unless marked on the calendar |
-| Holiday work days | Sat/Sun/holiday marked as office day defaults to **:Office**; tap label to switch Office/Remote via popup |
-| Bulk apply button | **Apply** button is **full width**, same as **Save** |
-| History layout | Date lines are **center-aligned**; colors match commute screen |
-| Work hours display | History and save preview show **(9.0)** / **(9.5)** style hours after clock-in/out (lunch + dinner breaks excluded) |
-| Break time settings | **Break Time (Lunch, Dinner)** card — editable HH/MM fields, full-width **Save** saves lunch+dinner together; **Attendance Report (CSV)** card for export |
-| Settings buttons | **Export**, break-time **Save**, and **Send Email** buttons are **full width** |
-| Total work hours | First line **`[Work hours:total]`** sums daily work hours on History and save preview |
-| Save preview format | Matches **Attendance History** line format (`YYYY/MM/DD(weekday) HH:MM-HH:MM (hours)`) |
+| Menu layout | **Alerts · Dates · Times · History · Holidays · Settings** (6 tabs) |
+| Alerts tab | Shows **memos** on office days as `YYYY/MM/DD(weekday):type` / `Memo:text` |
+| Year Holidays tab | Japanese holidays by year/month with calendar (substitute & citizens' holidays) |
+| Per-day memo | **Memo** field on each date in Commute Times for special notes |
+| Display language | **Japanese · Chinese · Korean · English** (same order in Settings) |
+| Chinese manual | [README_ZH.md](README_ZH.md) with `docs/images/zh/` screen captures |
+| Screen captures | Updated 6 screens × 4 languages (`scripts/capture-manual-screenshots.sh`) |
+| Google tab | Removed (settings, history, and commute features retained) |
+| Default language | **Japanese** on first launch |
+| Arrival types | Normal/Early/Late/Remote/Vacation with configurable colors and clock-in times |
+| Calendar holidays | Japanese holidays shown as **red circles** on work-date calendar |
+| Commute day types | Weekends/holidays show **:Holiday** unless marked; Office/Remote switchable |
+| Work hours | **`[Work hours:total]`** and per-day `(9.0)` format (breaks excluded) |
 | Bulk time entry | Excludes **weekends** and **Japanese holidays** from bulk apply |
-| Time input UI | Per-day editing uses compact **HH:MM** inputs |
-| Google screen | Account select/change only (register button and schedule lists removed) |
-| Settings tab | Display language, attendance CSV export, email with attachments |
-| APK download | Pre-built APK available at `dist/出退勤管理-v1.0.0.apk` in the repository |
-| Holiday logic | `src/utils/japaneseHolidays.ts`, `src/utils/commuteDayType.ts`, `src/utils/workDuration.ts` |
-| App layout | **Cute top banner** + **link-button navigation on banner** |
-| Menu labels | Shortened to **Dates · Times · Google · History · Settings** |
-| Reset times | **Reset** on Commute Times clears all month times to **00:00** |
+| Reset times | **Reset** on Commute Times clears month times and memos to **00:00** / empty |
+| APK download | Pre-built APK at `dist/出退勤管理-v1.0.0.apk` in the repository |
 
 ---
 
@@ -271,13 +269,14 @@ googleCalenderApp/
 │   ├── screens/               # Feature screens
 │   ├── components/            # Banner, calendar, shared UI
 │   ├── context/               # Data & language context
-│   ├── i18n/                  # Translations (ja/ko/en)
+│   ├── i18n/                  # Translations (ja/zh/ko/en)
 │   ├── utils/                 # Date, storage, CSV, holidays, commute day-type utilities
 │   └── services/              # Google Calendar API
 ├── docs/images/
-│   ├── en/                    # English screen captures
 │   ├── ja/                    # Japanese screen captures
-│   └── ko/                    # Korean screen captures
+│   ├── zh/                    # Chinese screen captures
+│   ├── ko/                    # Korean screen captures
+│   └── en/                    # English screen captures
 ├── assets/                    # App icon, banner & splash
 ├── android/                   # Native Android project
 └── dist/                      # Built APK output

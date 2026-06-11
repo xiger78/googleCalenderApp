@@ -1,7 +1,11 @@
-export type Language = 'ja' | 'ko' | 'en';
+export type Language = 'ja' | 'ko' | 'en' | 'zh';
 
-export const LANGUAGE_OPTIONS: { value: Language; labelKey: 'langJa' | 'langKo' | 'langEn' }[] = [
+export const LANGUAGE_OPTIONS: {
+  value: Language;
+  labelKey: 'langJa' | 'langKo' | 'langEn' | 'langZh';
+}[] = [
   { value: 'ja', labelKey: 'langJa' },
+  { value: 'zh', labelKey: 'langZh' },
   { value: 'ko', labelKey: 'langKo' },
   { value: 'en', labelKey: 'langEn' },
 ];

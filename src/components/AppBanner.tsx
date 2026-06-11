@@ -10,9 +10,11 @@ const NAV_CARD_HEIGHT = 72;
 type TabIconName = keyof typeof MaterialCommunityIcons.glyphMap;
 
 const TAB_CONFIG: Record<string, { icon: TabIconName; activeColor: string }> = {
+  Notifications: { icon: 'bell-outline', activeColor: '#F57C00' },
   WorkDate: { icon: 'calendar-month', activeColor: '#1976D2' },
   CommuteTime: { icon: 'clock-outline', activeColor: '#4CAF50' },
   AttendanceHistory: { icon: 'clipboard-text-outline', activeColor: '#1976D2' },
+  YearHolidays: { icon: 'calendar-star', activeColor: '#E65100' },
   Settings: { icon: 'cog-outline', activeColor: '#616161' },
 };
 

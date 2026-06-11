@@ -6,6 +6,7 @@ import {
   View,
   Alert,
   TouchableOpacity,
+  TextInput,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { YearMonthPicker } from '../components/YearMonthPicker';
@@ -90,7 +91,9 @@ function DayTimeRow({
   rowColors,
   canChangeType,
   draft,
+  memo,
   onUpdatePart,
+  onMemoChange,
   onChangeWorkType,
   tr,
   weekdays,
@@ -100,7 +103,9 @@ function DayTimeRow({
   rowColors: { backgroundColor: string; borderColor: string };
   canChangeType: boolean;
   draft: DayTimeDraft;
+  memo: string;
   onUpdatePart: (dateKey: string, field: keyof DayTimeDraft, value: string) => void;
+  onMemoChange: (dateKey: string, value: string) => void;
   onChangeWorkType: (dateKey: string, workType: HolidayWorkType) => void;
   tr: (key: TranslationKey, params?: Record<string, string | number>) => string;
   weekdays: string[];
@@ -150,6 +155,18 @@ function DayTimeRow({
         onClockOutHourChange={(v) => onUpdatePart(dateKey, 'clockOutHour', v)}
         onClockOutMinuteChange={(v) => onUpdatePart(dateKey, 'clockOutMinute', v)}
       />
+      <View style={styles.memoBox}>
+        <Text style={styles.memoLabel}>{tr('commuteMemoLabel')}</Text>
+        <TextInput
+          style={styles.memoInput}
+          value={memo}
+          onChangeText={(v) => onMemoChange(dateKey, v)}
+          placeholder={tr('commuteMemoPlaceholder')}
+          multiline
+          numberOfLines={2}
+          textAlignVertical="top"
+        />
+      </View>
     </View>
   );
 }
@@ -165,10 +182,11 @@ export function CommuteTimeScreen() {
   const [clockOutMinute, setClockOutMinute] = useState('00');
 
   const [draftParts, setDraftParts] = useState<Record<string, DayTimeDraft>>({});
+  const [memoDrafts, setMemoDrafts] = useState<Record<string, string>>({});
   const [preview, setPreview] = useState<PreviewItem[]>([]);
   const [previewTotalHours, setPreviewTotalHours] = useState<string | null>(null);
 
-  const { data, setCommuteTimes, setHolidayWorkType } = useWorkDataContext();
+  const { data, setCommuteTimes, setDayMemos, setHolidayWorkType } = useWorkDataContext();
   const {
     language,
     lunchBreakMinutes,
@@ -210,6 +228,15 @@ export function CommuteTimeScreen() {
   const updateDraftPart = (dateKey: string, field: keyof DayTimeDraft, value: string) => {
     const current = getDraftForDate(dateKey);
     setDraftParts((prev) => ({ ...prev, [dateKey]: { ...current, [field]: value } }));
+  };
+
+  const getMemoForDate = (dateKey: string): string => {
+    if (dateKey in memoDrafts) return memoDrafts[dateKey];
+    return data.dayMemos[dateKey] ?? '';
+  };
+
+  const updateMemo = (dateKey: string, value: string) => {
+    setMemoDrafts((prev) => ({ ...prev, [dateKey]: value }));
   };
 
   const handleChangeWorkType = async (dateKey: string, workType: HolidayWorkType) => {
@@ -259,10 +286,12 @@ export function CommuteTimeScreen() {
       clockOutMinute: '00',
     };
     const nextCommute = { ...data.commuteTimes };
+    const nextMemos = { ...data.dayMemos };
     const nextDraft: Record<string, DayTimeDraft> = {};
 
     allDays.forEach((dateKey) => {
       nextCommute[dateKey] = zeroTime;
+      delete nextMemos[dateKey];
       nextDraft[dateKey] = zeroDraft;
     });
 
@@ -271,9 +300,11 @@ export function CommuteTimeScreen() {
     setClockOutHour('00');
     setClockOutMinute('00');
     setDraftParts(nextDraft);
+    setMemoDrafts({});
     setPreview([]);
     setPreviewTotalHours(null);
     await setCommuteTimes(nextCommute);
+    await setDayMemos(nextMemos);
   };
 
   const handleSave = async () => {
@@ -282,27 +313,41 @@ export function CommuteTimeScreen() {
       merged[dateKey] = draftToCommuteTime(parts);
     });
 
+    const mergedMemos = { ...data.dayMemos };
+    Object.entries(memoDrafts).forEach(([dateKey, memo]) => {
+      const trimmed = memo.trim();
+      if (trimmed) {
+        mergedMemos[dateKey] = trimmed;
+      } else {
+        delete mergedMemos[dateKey];
+      }
+    });
+
     const timeEntries: { clockIn: string; clockOut: string }[] = [];
     const savedList: PreviewItem[] = Array.from({ length: daysInMonth }, (_, i) => {
       const dateKey = formatDateKey(year, month, i + 1);
       const times = merged[dateKey] ?? getCommuteTimeForDate(dateKey);
-      if (!times?.clockIn && !times?.clockOut) return null;
+      const memo = mergedMemos[dateKey] ?? '';
+      if (!times?.clockIn && !times?.clockOut && !memo) return null;
       const clockIn = times.clockIn ?? '--:--';
       const clockOut = times.clockOut ?? '--:--';
       timeEntries.push({ clockIn, clockOut });
       const dateLabel = formatSlashDateWithWeekday(dateKey, weekdays);
       const workHours = getWorkHoursParenthetical(clockIn, clockOut, totalBreakMinutes);
+      const memoSuffix = memo ? ` ${tr('commuteMemoPreview', { memo })}` : '';
       return {
         dateKey,
-        line: `${dateLabel} ${clockIn}-${clockOut}${workHours}`,
+        line: `${dateLabel} ${clockIn}-${clockOut}${workHours}${memoSuffix}`,
       };
     }).filter(Boolean) as PreviewItem[];
 
     const totalMinutes = sumWorkMinutes(timeEntries, totalBreakMinutes);
     await setCommuteTimes(merged);
+    await setDayMemos(mergedMemos);
     setPreview(savedList);
     setPreviewTotalHours(formatTotalWorkHoursDecimal(totalMinutes));
     setDraftParts({});
+    setMemoDrafts({});
     Alert.alert(tr('alertSaved'), tr('alertCommuteSaved'));
   };
 
@@ -391,7 +436,9 @@ export function CommuteTimeScreen() {
                 data.workDayTypes[dateKey] !== 'vacation'
               }
               draft={getDraftForDate(dateKey)}
+              memo={getMemoForDate(dateKey)}
               onUpdatePart={updateDraftPart}
+              onMemoChange={updateMemo}
               onChangeWorkType={handleChangeWorkType}
               tr={tr}
               weekdays={weekdays}
@@ -477,6 +524,19 @@ const styles = StyleSheet.create({
   },
   dateLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   dateLabel: { fontSize: 14, fontWeight: '700', color: '#333' },
+  memoBox: { gap: 4 },
+  memoLabel: { fontSize: 12, fontWeight: '600', color: '#555' },
+  memoInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 13,
+    color: '#333',
+    backgroundColor: '#fff',
+    minHeight: 40,
+  },
   saveRow: { marginTop: 20 },
   preview: { marginTop: 24, padding: 16, backgroundColor: '#f3e5f5', borderRadius: 12 },
   previewTitle: { fontSize: 15, fontWeight: '600', marginBottom: 8, color: '#6a1b9a' },
