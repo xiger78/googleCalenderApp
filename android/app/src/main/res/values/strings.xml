@@ -1,5 +1,5 @@
 <resources>
-  <string name="app_name">출퇴근 관리</string>
+  <string name="app_name">出退勤管理</string>
   <string name="expo_splash_screen_resize_mode" translatable="false">contain</string>
   <string name="expo_splash_screen_status_bar_translucent" translatable="false">false</string>
 </resources>
