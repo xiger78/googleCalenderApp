@@ -15,8 +15,9 @@ interface Props {
   year: number;
   month: number;
   selectedDates: string[];
-  onDatePress: (dateKey: string) => void;
-  highlightColor?: string;
+  dateColors: Record<string, string>;
+  onDatePress: (dateKey: string, action: 'set' | 'clear') => void;
+  legendItems?: { color: string; label: string }[];
 }
 
 const DOUBLE_TAP_DELAY = 300;
@@ -25,8 +26,9 @@ export function CalendarGrid({
   year,
   month,
   selectedDates,
+  dateColors,
   onDatePress,
-  highlightColor = '#A5D6A7',
+  legendItems = [],
 }: Props) {
   const { language, tr } = useLanguage();
   const weekdays = getWeekdays(language);
@@ -47,17 +49,14 @@ export function CalendarGrid({
       now - lastTap.current.time < DOUBLE_TAP_DELAY
     ) {
       if (isSelected) {
-        onDatePress(dateKey);
+        onDatePress(dateKey, 'clear');
       }
       lastTap.current = null;
       return;
     }
 
     lastTap.current = { dateKey, time: now };
-
-    if (!isSelected) {
-      onDatePress(dateKey);
-    }
+    onDatePress(dateKey, 'set');
   };
 
   return (
@@ -82,7 +81,7 @@ export function CalendarGrid({
           const holiday = isJapaneseHoliday(dateKey);
           const dow = (firstDay + day - 1) % 7;
           const circleBg = selected
-            ? highlightColor
+            ? dateColors[dateKey]
             : holiday
               ? HOLIDAY_COLOR
               : undefined;
@@ -112,10 +111,12 @@ export function CalendarGrid({
         })}
       </View>
       <View style={styles.legendRow}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: highlightColor }]} />
-          <Text style={styles.legendText}>{tr('legendOfficeDay')}</Text>
-        </View>
+        {legendItems.map((item) => (
+          <View key={item.label} style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: item.color }]} />
+            <Text style={styles.legendText}>{item.label}</Text>
+          </View>
+        ))}
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: HOLIDAY_COLOR }]} />
           <Text style={styles.legendText}>{tr('legendHoliday')}</Text>
@@ -175,8 +176,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    flexWrap: 'wrap',
     marginTop: 12,
-    gap: 20,
+    gap: 12,
   },
   legendItem: {
     flexDirection: 'row',

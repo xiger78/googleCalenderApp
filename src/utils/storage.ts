@@ -6,6 +6,7 @@ const defaultData: WorkData = {
   workDays: [],
   commuteTimes: {},
   holidayWorkTypes: {},
+  workDayTypes: {},
 };
 
 export async function loadWorkData(): Promise<WorkData> {
@@ -17,6 +18,7 @@ export async function loadWorkData(): Promise<WorkData> {
       workDays: parsed.workDays ?? [],
       commuteTimes: parsed.commuteTimes ?? {},
       holidayWorkTypes: parsed.holidayWorkTypes ?? {},
+      workDayTypes: parsed.workDayTypes ?? {},
     };
   } catch {
     return { ...defaultData };

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { HolidayWorkType, WorkData } from '../types';
+import { ArrivalTypeConfig, HolidayWorkType, WorkArrivalType, WorkData } from '../types';
+import { configToCommuteTimes } from '../utils/arrivalSettings';
 import { loadWorkData, saveWorkData } from '../utils/storage';
 
 export function useWorkData() {
@@ -7,6 +8,7 @@ export function useWorkData() {
     workDays: [],
     commuteTimes: {},
     holidayWorkTypes: {},
+    workDayTypes: {},
   });
   const [loading, setLoading] = useState(true);
 
@@ -22,21 +24,44 @@ export function useWorkData() {
     await saveWorkData(next);
   }, []);
 
+  const clearWorkDay = useCallback(
+    async (dateKey: string) => {
+      const workDays = data.workDays.filter((d) => d !== dateKey);
+      const commuteTimes = { ...data.commuteTimes };
+      const holidayWorkTypes = { ...data.holidayWorkTypes };
+      const workDayTypes = { ...data.workDayTypes };
+      delete commuteTimes[dateKey];
+      delete holidayWorkTypes[dateKey];
+      delete workDayTypes[dateKey];
+      await persist({ ...data, workDays, commuteTimes, holidayWorkTypes, workDayTypes });
+    },
+    [data, persist]
+  );
+
+  const setWorkDayArrival = useCallback(
+    async (dateKey: string, arrivalType: WorkArrivalType, config: ArrivalTypeConfig) => {
+      const workDays = data.workDays.includes(dateKey)
+        ? data.workDays
+        : [...data.workDays, dateKey].sort();
+      const times = configToCommuteTimes(config);
+      await persist({
+        ...data,
+        workDays,
+        workDayTypes: { ...data.workDayTypes, [dateKey]: arrivalType },
+        commuteTimes: { ...data.commuteTimes, [dateKey]: times },
+      });
+    },
+    [data, persist]
+  );
+
   const toggleWorkDay = useCallback(
     async (dateKey: string) => {
       const exists = data.workDays.includes(dateKey);
-      const workDays = exists
-        ? data.workDays.filter((d) => d !== dateKey)
-        : [...data.workDays, dateKey].sort();
-      const commuteTimes = { ...data.commuteTimes };
-      const holidayWorkTypes = { ...data.holidayWorkTypes };
       if (exists) {
-        delete commuteTimes[dateKey];
-        delete holidayWorkTypes[dateKey];
+        await clearWorkDay(dateKey);
       }
-      await persist({ ...data, workDays, commuteTimes, holidayWorkTypes });
     },
-    [data, persist]
+    [data.workDays, clearWorkDay]
   );
 
   const setCommuteTimes = useCallback(
@@ -65,6 +90,8 @@ export function useWorkData() {
     data,
     loading,
     toggleWorkDay,
+    setWorkDayArrival,
+    clearWorkDay,
     setCommuteTimes,
     setHolidayWorkType,
     isWorkDay,

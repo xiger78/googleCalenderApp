@@ -1,22 +1,43 @@
 import React, { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppSettings, Language, SETTINGS_STORAGE_KEY } from '../i18n/types';
+import { ArrivalTypeConfig } from '../types';
+import {
+  AppSettings,
+  DEFAULT_APP_SETTINGS,
+  Language,
+  SETTINGS_STORAGE_KEY,
+} from '../i18n/types';
+import { DEFAULT_ARRIVAL_CONFIGS } from '../utils/arrivalSettings';
 import { t, TranslationKey } from '../i18n/translations';
 
-const defaultSettings: AppSettings = {
-  language: 'ja',
-  lunchBreakMinutes: 60,
-  eveningBreakMinutes: 0,
-};
+function mergeSettings(parsed: Partial<AppSettings>): AppSettings {
+  return {
+    ...DEFAULT_APP_SETTINGS,
+    ...parsed,
+    lunchBreakMinutes: parsed.lunchBreakMinutes ?? 60,
+    eveningBreakMinutes: parsed.eveningBreakMinutes ?? 0,
+    normalArrival: { ...DEFAULT_ARRIVAL_CONFIGS.normal, ...parsed.normalArrival },
+    earlyArrival: { ...DEFAULT_ARRIVAL_CONFIGS.early, ...parsed.earlyArrival },
+    lateArrival: { ...DEFAULT_ARRIVAL_CONFIGS.late, ...parsed.lateArrival },
+  };
+}
 
 interface LanguageContextType {
   language: Language;
   lunchBreakMinutes: number;
   eveningBreakMinutes: number;
+  normalArrival: ArrivalTypeConfig;
+  earlyArrival: ArrivalTypeConfig;
+  lateArrival: ArrivalTypeConfig;
   setLanguage: (lang: Language) => Promise<void>;
   setLunchBreakMinutes: (minutes: number) => Promise<void>;
   setEveningBreakMinutes: (minutes: number) => Promise<void>;
   setBreakTimes: (lunchBreakMinutes: number, eveningBreakMinutes: number) => Promise<void>;
+  setArrivalSettings: (
+    normal: ArrivalTypeConfig,
+    early: ArrivalTypeConfig,
+    late: ArrivalTypeConfig
+  ) => Promise<void>;
   tr: (key: TranslationKey, params?: Record<string, string | number>) => string;
   loading: boolean;
 }
@@ -24,20 +45,15 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState<AppSettings>(defaultSettings);
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_APP_SETTINGS);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     AsyncStorage.getItem(SETTINGS_STORAGE_KEY).then((raw) => {
       if (raw) {
         try {
-          const parsed = JSON.parse(raw) as AppSettings;
-          setSettings({
-            ...defaultSettings,
-            ...parsed,
-            lunchBreakMinutes: parsed.lunchBreakMinutes ?? 60,
-            eveningBreakMinutes: parsed.eveningBreakMinutes ?? 0,
-          });
+          const parsed = JSON.parse(raw) as Partial<AppSettings>;
+          setSettings(mergeSettings(parsed));
         } catch {
           /* use defaults */
         }
@@ -46,13 +62,16 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const setLanguage = useCallback(async (language: Language) => {
-    setSettings((prev) => {
-      const next = { ...prev, language };
-      AsyncStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(next));
-      return next;
-    });
-  }, []);
+  const setLanguage = useCallback(
+    async (language: Language) => {
+      setSettings((prev) => {
+        const next = { ...prev, language };
+        AsyncStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(next));
+        return next;
+      });
+    },
+    []
+  );
 
   const setLunchBreakMinutes = useCallback(async (lunchBreakMinutes: number) => {
     setSettings((prev) => {
@@ -81,6 +100,22 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const setArrivalSettings = useCallback(
+    async (normal: ArrivalTypeConfig, early: ArrivalTypeConfig, late: ArrivalTypeConfig) => {
+      setSettings((prev) => {
+        const next = {
+          ...prev,
+          normalArrival: normal,
+          earlyArrival: early,
+          lateArrival: late,
+        };
+        AsyncStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(next));
+        return next;
+      });
+    },
+    []
+  );
+
   const tr = useCallback(
     (key: TranslationKey, params?: Record<string, string | number>) =>
       t(settings.language, key, params),
@@ -93,10 +128,14 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         language: settings.language,
         lunchBreakMinutes: settings.lunchBreakMinutes,
         eveningBreakMinutes: settings.eveningBreakMinutes ?? 0,
+        normalArrival: settings.normalArrival,
+        earlyArrival: settings.earlyArrival,
+        lateArrival: settings.lateArrival,
         setLanguage,
         setLunchBreakMinutes,
         setEveningBreakMinutes,
         setBreakTimes,
+        setArrivalSettings,
         tr,
         loading,
       }}

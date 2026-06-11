@@ -1,22 +1,70 @@
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { YearMonthPicker } from '../components/YearMonthPicker';
 import { CalendarGrid } from '../components/CalendarGrid';
 import { useWorkDataContext } from '../context/WorkDataContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getWorkDaysInMonth } from '../utils/storage';
+import { WorkArrivalType } from '../types';
+import { getArrivalColorHex } from '../utils/arrivalSettings';
+
+const ARRIVAL_MODES: WorkArrivalType[] = ['normal', 'early', 'late'];
 
 export function WorkDateScreen() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
-  const { data, toggleWorkDay } = useWorkDataContext();
-  const { tr } = useLanguage();
+  const [selectedMode, setSelectedMode] = useState<WorkArrivalType>('normal');
+  const { data, setWorkDayArrival, clearWorkDay } = useWorkDataContext();
+  const { tr, normalArrival, earlyArrival, lateArrival } = useLanguage();
 
   const monthWorkDays = getWorkDaysInMonth(data.workDays, year, month);
 
+  const arrivalSettings = useMemo(
+    () => ({
+      normal: normalArrival,
+      early: earlyArrival,
+      late: lateArrival,
+    }),
+    [normalArrival, earlyArrival, lateArrival]
+  );
+
+  const dateColors = useMemo(() => {
+    const colors: Record<string, string> = {};
+    monthWorkDays.forEach((dateKey) => {
+      const type = data.workDayTypes[dateKey] ?? 'normal';
+      const config = arrivalSettings[type];
+      colors[dateKey] = getArrivalColorHex(config.color);
+    });
+    return colors;
+  }, [monthWorkDays, data.workDayTypes, arrivalSettings]);
+
+  const modeLabel = (type: WorkArrivalType) => {
+    if (type === 'early') return tr('arrivalEarly');
+    if (type === 'late') return tr('arrivalLate');
+    return tr('arrivalNormal');
+  };
+
+  const handleDatePress = async (dateKey: string, action: 'set' | 'clear') => {
+    if (action === 'clear') {
+      await clearWorkDay(dateKey);
+      return;
+    }
+    const config = arrivalSettings[selectedMode];
+    await setWorkDayArrival(dateKey, selectedMode, config);
+  };
+
+  const legendItems = ARRIVAL_MODES.map((type) => ({
+    color: getArrivalColorHex(arrivalSettings[type].color),
+    label: modeLabel(type),
+  }));
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
+    >
       <View style={styles.card}>
         <Text style={styles.centerTitle}>{tr('workDateTitle')}</Text>
 
@@ -31,8 +79,34 @@ export function WorkDateScreen() {
           year={year}
           month={month}
           selectedDates={monthWorkDays}
-          onDatePress={toggleWorkDay}
+          dateColors={dateColors}
+          onDatePress={handleDatePress}
+          legendItems={legendItems}
         />
+
+        <View style={styles.modeRow}>
+          {ARRIVAL_MODES.map((type) => {
+            const active = selectedMode === type;
+            const bg = getArrivalColorHex(arrivalSettings[type].color);
+            return (
+              <TouchableOpacity
+                key={type}
+                style={[
+                  styles.modeBtn,
+                  { backgroundColor: bg },
+                  active && styles.modeBtnActive,
+                ]}
+                onPress={() => setSelectedMode(type)}
+                activeOpacity={0.85}
+              >
+                <Text style={[styles.modeBtnText, active && styles.modeBtnTextActive]}>
+                  {modeLabel(type)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        <Text style={styles.modeHint}>{tr('arrivalModeHint')}</Text>
       </View>
     </ScrollView>
   );
@@ -57,5 +131,38 @@ const styles = StyleSheet.create({
     color: '#222',
     textAlign: 'center',
     marginBottom: 16,
+  },
+  modeRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 20,
+  },
+  modeBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 6,
+    borderRadius: 10,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  modeBtnActive: {
+    borderColor: '#333',
+  },
+  modeBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#333',
+    textAlign: 'center',
+  },
+  modeBtnTextActive: {
+    fontWeight: '800',
+  },
+  modeHint: {
+    marginTop: 10,
+    fontSize: 12,
+    color: '#888',
+    textAlign: 'center',
+    lineHeight: 18,
   },
 });

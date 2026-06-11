@@ -15,10 +15,14 @@ import { YearMonthPicker } from '../components/YearMonthPicker';
 import { Button } from '../components/Button';
 import { Picker } from '../components/Picker';
 import { TimeInput } from '../components/TimeInput';
+import { ColorPicker } from '../components/ColorPicker';
 import { useLanguage } from '../context/LanguageContext';
 import { useWorkDataContext } from '../context/WorkDataContext';
 import { LANGUAGE_OPTIONS, Language } from '../i18n/types';
 import { exportAttendanceCsv } from '../utils/attendanceReport';
+import { ArrivalColor, ArrivalTypeConfig } from '../types';
+import { formatTime, isValidTime } from '../utils/dateUtils';
+import { parseClockInToDraft } from '../utils/arrivalSettings';
 
 function SettingsCard({
   category,
@@ -66,6 +70,44 @@ function SettingsCard({
   );
 }
 
+type ArrivalDraft = {
+  color: ArrivalColor;
+  hour: string;
+  minute: string;
+};
+
+function ArrivalTypeEditor({
+  title,
+  draft,
+  onColorChange,
+  onHourChange,
+  onMinuteChange,
+  tr,
+}: {
+  title: string;
+  draft: ArrivalDraft;
+  onColorChange: (color: ArrivalColor) => void;
+  onHourChange: (v: string) => void;
+  onMinuteChange: (v: string) => void;
+  tr: (key: import('../i18n/translations').TranslationKey) => string;
+}) {
+  return (
+    <View style={styles.arrivalBlock}>
+      <Text style={styles.arrivalBlockTitle}>{title}</Text>
+      <Text style={styles.label}>{tr('settingsArrivalColor')}</Text>
+      <ColorPicker value={draft.color} onChange={onColorChange} />
+      <Text style={styles.label}>{tr('settingsArrivalClockIn')}</Text>
+      <TimeInput
+        label=""
+        hour={draft.hour}
+        minute={draft.minute}
+        onHourChange={onHourChange}
+        onMinuteChange={onMinuteChange}
+      />
+    </View>
+  );
+}
+
 export function SettingsScreen() {
   const now = new Date();
   const {
@@ -74,16 +116,31 @@ export function SettingsScreen() {
     eveningBreakMinutes,
     setLanguage,
     setBreakTimes,
+    setArrivalSettings,
+    normalArrival,
+    earlyArrival,
+    lateArrival,
     tr,
   } = useLanguage();
   const { data } = useWorkDataContext();
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>({
     language: true,
+    arrival: false,
     attendance: false,
     export: false,
     email: false,
   });
+
+  const toArrivalDraft = (config: ArrivalTypeConfig): ArrivalDraft => {
+    const { hour, minute } = parseClockInToDraft(config.clockIn);
+    return { color: config.color, hour, minute };
+  };
+
+  const [draftNormal, setDraftNormal] = useState<ArrivalDraft>(() => toArrivalDraft(normalArrival));
+  const [draftEarly, setDraftEarly] = useState<ArrivalDraft>(() => toArrivalDraft(earlyArrival));
+  const [draftLate, setDraftLate] = useState<ArrivalDraft>(() => toArrivalDraft(lateArrival));
+  const [savingArrival, setSavingArrival] = useState(false);
 
   const [reportYear, setReportYear] = useState(now.getFullYear());
   const [reportMonth, setReportMonth] = useState(now.getMonth() + 1);
@@ -110,6 +167,20 @@ export function SettingsScreen() {
     setDraftEveningMinute(toMinuteStr(eveningBreakMinutes));
   };
 
+  const syncArrivalDraft = () => {
+    setDraftNormal(toArrivalDraft(normalArrival));
+    setDraftEarly(toArrivalDraft(earlyArrival));
+    setDraftLate(toArrivalDraft(lateArrival));
+  };
+
+  const draftToConfig = (draft: ArrivalDraft): ArrivalTypeConfig | null => {
+    if (!isValidTime(draft.hour, draft.minute)) return null;
+    return {
+      color: draft.color,
+      clockIn: formatTime(draft.hour, draft.minute),
+    };
+  };
+
   const parseDraftMinutes = (hour: string, minute: string) => {
     const h = parseInt(hour || '0', 10);
     const m = parseInt(minute || '0', 10);
@@ -134,12 +205,35 @@ export function SettingsScreen() {
       if (key === 'attendance' && willExpand) {
         syncBreakDraft();
       }
+      if (key === 'arrival' && willExpand) {
+        syncArrivalDraft();
+      }
       return { ...prev, [key]: willExpand };
     });
   };
 
   const handleLanguageChange = (lang: string | number) => {
     setLanguage(lang as Language);
+  };
+
+  const handleSaveArrivalSettings = async () => {
+    const normal = draftToConfig(draftNormal);
+    const early = draftToConfig(draftEarly);
+    const late = draftToConfig(draftLate);
+    if (!normal || !early || !late) {
+      Alert.alert(tr('alertInputError'), tr('alertInvalidClockIn'));
+      return;
+    }
+    setSavingArrival(true);
+    try {
+      await setArrivalSettings(normal, early, late);
+      setDraftNormal(toArrivalDraft(normal));
+      setDraftEarly(toArrivalDraft(early));
+      setDraftLate(toArrivalDraft(late));
+      Alert.alert(tr('alertSaved'), tr('alertArrivalSaved'));
+    } finally {
+      setSavingArrival(false);
+    }
   };
 
   const handleSaveBreakTimes = async () => {
@@ -247,6 +341,50 @@ export function SettingsScreen() {
             value: opt.value,
           }))}
         />
+      </SettingsCard>
+
+      <SettingsCard
+        category={tr('settingsArrival')}
+        icon="calendar-clock"
+        iconColor="#F57C00"
+        iconBg="#FFF3E0"
+        title={tr('settingsArrivalItem')}
+        description={tr('settingsArrivalItemDesc')}
+        expanded={expanded.arrival}
+        onToggle={() => toggle('arrival')}
+      >
+        <ArrivalTypeEditor
+          title={tr('arrivalNormal')}
+          draft={draftNormal}
+          onColorChange={(color) => setDraftNormal((prev) => ({ ...prev, color }))}
+          onHourChange={(hour) => setDraftNormal((prev) => ({ ...prev, hour }))}
+          onMinuteChange={(minute) => setDraftNormal((prev) => ({ ...prev, minute }))}
+          tr={tr}
+        />
+        <ArrivalTypeEditor
+          title={tr('arrivalEarly')}
+          draft={draftEarly}
+          onColorChange={(color) => setDraftEarly((prev) => ({ ...prev, color }))}
+          onHourChange={(hour) => setDraftEarly((prev) => ({ ...prev, hour }))}
+          onMinuteChange={(minute) => setDraftEarly((prev) => ({ ...prev, minute }))}
+          tr={tr}
+        />
+        <ArrivalTypeEditor
+          title={tr('arrivalLate')}
+          draft={draftLate}
+          onColorChange={(color) => setDraftLate((prev) => ({ ...prev, color }))}
+          onHourChange={(hour) => setDraftLate((prev) => ({ ...prev, hour }))}
+          onMinuteChange={(minute) => setDraftLate((prev) => ({ ...prev, minute }))}
+          tr={tr}
+        />
+        <View style={styles.saveBreakRow}>
+          <Button
+            title={tr('save')}
+            onPress={handleSaveArrivalSettings}
+            loading={savingArrival}
+            fullWidth
+          />
+        </View>
       </SettingsCard>
 
       <SettingsCard
@@ -422,4 +560,16 @@ const styles = StyleSheet.create({
   attachName: { flex: 1, fontSize: 13, color: '#555' },
   csvHint: { fontSize: 12, color: '#2e7d32', marginTop: 8 },
   sendRow: { marginTop: 16 },
+  arrivalBlock: {
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  arrivalBlockTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 4,
+  },
 });
