@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ArrivalTypeConfig, HolidayWorkType, WorkArrivalType, WorkData } from '../types';
 import { configToCommuteTimes } from '../utils/arrivalSettings';
 import { isNonWorkingDay } from '../utils/japaneseHolidays';
+import { getMonthDateKeys } from '../utils/dateUtils';
 import { loadWorkData, saveWorkData } from '../utils/storage';
 
 export function useWorkData() {
@@ -99,12 +100,30 @@ export function useWorkData() {
     [data.workDays]
   );
 
+  const clearMonthWorkDays = useCallback(
+    async (year: number, month: number) => {
+      const monthKeys = new Set(getMonthDateKeys(year, month));
+      const workDays = data.workDays.filter((d) => !monthKeys.has(d));
+      const commuteTimes = { ...data.commuteTimes };
+      const holidayWorkTypes = { ...data.holidayWorkTypes };
+      const workDayTypes = { ...data.workDayTypes };
+      monthKeys.forEach((dateKey) => {
+        delete commuteTimes[dateKey];
+        delete holidayWorkTypes[dateKey];
+        delete workDayTypes[dateKey];
+      });
+      await persist({ ...data, workDays, commuteTimes, holidayWorkTypes, workDayTypes });
+    },
+    [data, persist]
+  );
+
   return {
     data,
     loading,
     toggleWorkDay,
     setWorkDayArrival,
     clearWorkDay,
+    clearMonthWorkDays,
     setCommuteTimes,
     setHolidayWorkType,
     isWorkDay,

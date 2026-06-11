@@ -110,9 +110,6 @@ export function CalendarGrid({
             <Text style={styles.legendText}>{item.label}</Text>
           </View>
         ))}
-        <View style={styles.legendItem}>
-          <Text style={styles.legendHolidayText}>{tr('legendHoliday')}</Text>
-        </View>
       </View>
       <Text style={styles.hint}>{tr('calendarHint')}</Text>
     </View>
@@ -181,11 +178,6 @@ const styles = StyleSheet.create({
   legendText: {
     fontSize: 13,
     color: '#555',
-  },
-  legendHolidayText: {
-    fontSize: 13,
-    color: '#e53935',
-    fontWeight: '600',
   },
   sunday: {
     color: '#e53935',

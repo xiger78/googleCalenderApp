@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { YearMonthPicker } from '../components/YearMonthPicker';
 import { CalendarGrid } from '../components/CalendarGrid';
 import { useWorkDataContext } from '../context/WorkDataContext';
@@ -15,7 +16,7 @@ export function WorkDateScreen() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [selectedMode, setSelectedMode] = useState<WorkArrivalType>('normal');
-  const { data, setWorkDayArrival, clearWorkDay } = useWorkDataContext();
+  const { data, setWorkDayArrival, clearWorkDay, clearMonthWorkDays } = useWorkDataContext();
   const { tr, normalArrival, earlyArrival, lateArrival, remoteArrival, vacationArrival } =
     useLanguage();
 
@@ -59,6 +60,10 @@ export function WorkDateScreen() {
     await setWorkDayArrival(dateKey, selectedMode, config);
   };
 
+  const handleResetMonth = async () => {
+    await clearMonthWorkDays(year, month);
+  };
+
   const legendItems = ARRIVAL_MODES.map((type) => ({
     color: getArrivalColorHex(arrivalSettings[type].color),
     label: modeLabel(type),
@@ -71,7 +76,13 @@ export function WorkDateScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.card}>
-        <Text style={styles.centerTitle}>{tr('workDateTitle')}</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.centerTitle}>{tr('workDateTitle')}</Text>
+          <TouchableOpacity onPress={handleResetMonth} style={styles.resetBtn} activeOpacity={0.7}>
+            <MaterialCommunityIcons name="refresh" size={14} color="#555" />
+            <Text style={styles.resetBtnText}>{tr('resetWorkDates')}</Text>
+          </TouchableOpacity>
+        </View>
 
         <YearMonthPicker
           year={year}
@@ -130,13 +141,31 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    gap: 8,
+  },
   centerTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: '#222',
-    textAlign: 'center',
-    marginBottom: 16,
+    flex: 1,
   },
+  resetBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: '#f5f5f5',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  resetBtnText: { fontSize: 12, fontWeight: '600', color: '#555' },
   modeRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
