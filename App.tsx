@@ -1,6 +1,7 @@
 import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import * as Notifications from 'expo-notifications';
 import { NavigationContainer } from '@react-navigation/native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -13,11 +14,21 @@ import { CommuteTimeScreen } from './src/screens/CommuteTimeScreen';
 import { AttendanceHistoryScreen } from './src/screens/AttendanceHistoryScreen';
 import { HolidayScreen } from './src/screens/HolidayScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
+import { useArrivalReminderNotifications } from './src/hooks/useArrivalReminderNotifications';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 const Tab = createMaterialTopTabNavigator();
 
 function AppContent() {
   const { loading } = useLanguage();
+  useArrivalReminderNotifications();
 
   if (loading) {
     return (

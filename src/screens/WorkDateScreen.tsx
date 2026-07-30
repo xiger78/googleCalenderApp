@@ -3,13 +3,18 @@ import { ScrollView, StyleSheet, Text, View, TouchableOpacity } from 'react-nati
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { YearMonthPicker } from '../components/YearMonthPicker';
 import { CalendarGrid } from '../components/CalendarGrid';
+import { ArrivalTypeLegend } from '../components/ArrivalTypeLegend';
 import { useWorkDataContext } from '../context/WorkDataContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getWorkDaysInMonth } from '../utils/storage';
 import { WorkArrivalType } from '../types';
-import { getArrivalColorHex } from '../utils/arrivalSettings';
+import { ARRIVAL_BORDER_HEX, getArrivalColorHex } from '../utils/arrivalSettings';
 
 const ARRIVAL_MODES: WorkArrivalType[] = ['normal', 'early', 'late', 'remote', 'vacation'];
+const LEGEND_ROWS: WorkArrivalType[][] = [
+  ['normal', 'early', 'late'],
+  ['remote', 'vacation'],
+];
 
 export function WorkDateScreen() {
   const now = new Date();
@@ -69,10 +74,17 @@ export function WorkDateScreen() {
     await clearMonthWorkDays(year, month);
   };
 
-  const legendItems = ARRIVAL_MODES.map((type) => ({
-    color: getArrivalColorHex(arrivalSettings[type].color),
-    label: modeLabel(type),
-  }));
+  const legendRows = LEGEND_ROWS.map((row) =>
+    row.map((type) => {
+      const config = arrivalSettings[type];
+      return {
+        key: type,
+        color: getArrivalColorHex(config.color),
+        borderColor: ARRIVAL_BORDER_HEX[config.color],
+        label: modeLabel(type),
+      };
+    })
+  );
 
   return (
     <ScrollView
@@ -102,7 +114,6 @@ export function WorkDateScreen() {
           selectedDates={monthWorkDays}
           dateColors={dateColors}
           onDatePress={handleDatePress}
-          legendItems={legendItems}
         />
 
         <View style={styles.modeRow}>
@@ -128,6 +139,10 @@ export function WorkDateScreen() {
           })}
         </View>
         <Text style={styles.modeHint}>{tr('arrivalModeHint')}</Text>
+
+        <View style={styles.legendWrap}>
+          <ArrivalTypeLegend title={tr('workDateLegendTitle')} rows={legendRows} />
+        </View>
       </View>
     </ScrollView>
   );
@@ -204,5 +219,8 @@ const styles = StyleSheet.create({
     color: '#888',
     textAlign: 'center',
     lineHeight: 18,
+  },
+  legendWrap: {
+    marginTop: 16,
   },
 });
