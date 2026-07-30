@@ -40,6 +40,7 @@ import {
   getCommuteRowColors,
   getEffectiveCommuteTimes,
   isBulkApplyEligibleDate,
+  shouldClearHolidayCommuteTime,
 } from '../utils/arrivalSettings';
 
 type PreviewItem = {
@@ -214,6 +215,10 @@ export function CommuteTimeScreen() {
   );
   const daysInMonth = getDaysInMonth(year, month);
   const weekdays = getWeekdays(language);
+  const monthDays = useMemo(
+    () => Array.from({ length: daysInMonth }, (_, i) => formatDateKey(year, month, i + 1)),
+    [daysInMonth, year, month]
+  );
 
   const getDraftForDate = (dateKey: string): DayTimeDraft => {
     if (draftParts[dateKey]) return draftParts[dateKey];
@@ -268,11 +273,15 @@ export function CommuteTimeScreen() {
     let appliedCount = 0;
 
     bulkTargetDays.forEach((dateKey) => {
-      if (isNonWorkingDay(dateKey)) return;
-
       next[dateKey] = bulkDraft;
       nextCommute[dateKey] = draftToCommuteTime(bulkDraft);
       appliedCount++;
+    });
+
+    monthDays.forEach((dateKey) => {
+      if (!shouldClearHolidayCommuteTime(dateKey, data.workDays)) return;
+      delete nextCommute[dateKey];
+      delete next[dateKey];
     });
 
     if (appliedCount === 0) {
@@ -305,6 +314,12 @@ export function CommuteTimeScreen() {
     const nextDraft: Record<string, DayTimeDraft> = {};
 
     allDays.forEach((dateKey) => {
+      if (shouldClearHolidayCommuteTime(dateKey, data.workDays)) {
+        delete nextCommute[dateKey];
+        delete nextMemos[dateKey];
+        delete nextDraft[dateKey];
+        return;
+      }
       nextCommute[dateKey] = zeroTime;
       delete nextMemos[dateKey];
       nextDraft[dateKey] = zeroDraft;
@@ -420,10 +435,6 @@ export function CommuteTimeScreen() {
     setMemoDrafts({});
     Alert.alert(tr('alertSaved'), tr('alertCommuteSaved'));
   };
-
-  const monthDays = Array.from({ length: daysInMonth }, (_, i) =>
-    formatDateKey(year, month, i + 1)
-  );
 
   return (
     <ScrollView

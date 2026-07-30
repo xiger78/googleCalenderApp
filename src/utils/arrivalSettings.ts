@@ -136,8 +136,16 @@ export function isBulkApplyEligibleDate(
   workDayTypes: Record<string, WorkArrivalType>
 ): boolean {
   if (isNonWorkingDay(dateKey)) return false;
+  if (!workDays.includes(dateKey)) return false;
   const arrivalType = getArrivalTypeForDate(dateKey, workDays, workDayTypes);
   return isBulkApplyTarget(arrivalType);
+}
+
+export function shouldClearHolidayCommuteTime(
+  dateKey: string,
+  workDays: string[]
+): boolean {
+  return isNonWorkingDay(dateKey) && !workDays.includes(dateKey);
 }
 
 export function bulkDraftForArrivalType(
@@ -188,7 +196,9 @@ export function getEffectiveCommuteTimes(
   }
 
   const shouldUseConfigDefaults =
-    workDays.includes(dateKey) || Boolean(savedIn || savedOut) || arrivalType === 'remote';
+    workDays.includes(dateKey) ||
+    Boolean(savedIn || savedOut) ||
+    (arrivalType === 'remote' && !isNonWorkingDay(dateKey));
 
   if (shouldUseConfigDefaults) {
     const fromConfig = configToCommuteTimes(arrivalConfigs[arrivalType], arrivalType, breakSettings);
