@@ -114,6 +114,15 @@ export function draftFromArrivalConfig(config: ArrivalTypeConfig): DayTimeDraft 
   };
 }
 
+export function emptyDayTimeDraft(): DayTimeDraft {
+  return {
+    clockInHour: '',
+    clockInMinute: '',
+    clockOutHour: '',
+    clockOutMinute: '',
+  };
+}
+
 export function draftFromCommuteTime(times?: CommuteTime): DayTimeDraft {
   const clockIn = parseClockInToDraft(times?.clockIn ?? '');
   const clockOut = parseClockInToDraft(times?.clockOut ?? '');
@@ -196,7 +205,7 @@ export function getEffectiveCommuteTimes(
   }
 
   const shouldUseConfigDefaults =
-    workDays.includes(dateKey) ||
+    (workDays.includes(dateKey) && !isNonWorkingDay(dateKey)) ||
     Boolean(savedIn || savedOut) ||
     (arrivalType === 'remote' && !isNonWorkingDay(dateKey));
 

@@ -35,6 +35,7 @@ import { ArrivalTypeConfig, CommuteTime, WorkArrivalType } from '../types';
 import {
   ARRIVAL_BORDER_HEX,
   draftFromCommuteTime,
+  emptyDayTimeDraft,
   getArrivalColorHex,
   getArrivalTypeForDate,
   getCommuteRowColors,
@@ -231,6 +232,9 @@ export function CommuteTimeScreen() {
       breakSettings
     );
     if (effective) return draftFromCommuteTime(effective);
+    if (shouldClearHolidayCommuteTime(dateKey, data.workDays)) {
+      return emptyDayTimeDraft();
+    }
     return draftFromCommuteTime(data.commuteTimes[dateKey]);
   };
 
@@ -276,12 +280,6 @@ export function CommuteTimeScreen() {
       next[dateKey] = bulkDraft;
       nextCommute[dateKey] = draftToCommuteTime(bulkDraft);
       appliedCount++;
-    });
-
-    monthDays.forEach((dateKey) => {
-      if (!shouldClearHolidayCommuteTime(dateKey, data.workDays)) return;
-      delete nextCommute[dateKey];
-      delete next[dateKey];
     });
 
     if (appliedCount === 0) {
@@ -339,6 +337,15 @@ export function CommuteTimeScreen() {
 
   const handleSaveDay = async (dateKey: string) => {
     const draft = getDraftForDate(dateKey);
+    if (!isValidTime(draft.clockInHour, draft.clockInMinute)) {
+      Alert.alert(tr('alertInputError'), tr('alertInvalidClockIn'));
+      return;
+    }
+    if (!isValidTime(draft.clockOutHour, draft.clockOutMinute)) {
+      Alert.alert(tr('alertInputError'), tr('alertInvalidClockOut'));
+      return;
+    }
+
     const merged = { ...data.commuteTimes, [dateKey]: draftToCommuteTime(draft) };
 
     const mergedMemos = { ...data.dayMemos };
