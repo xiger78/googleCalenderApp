@@ -209,11 +209,5 @@ export function isNonWorkingDay(dateKey: string): boolean {
 
 /** 일괄등록 대상: 토·일 및 일본 공휴일 제외 */
 export function getBulkApplyDateKeys(year: number, month: number): string[] {
-  const holidays = getJapaneseHolidaysForYear(year);
-  return getMonthDateKeys(year, month).filter((dateKey) => {
-    const { year: y, month: m, day: d } = parseDateKey(dateKey);
-    if (isWeekend(y, m, d)) return false;
-    if (holidays.has(dateKey)) return false;
-    return true;
-  });
+  return getMonthDateKeys(year, month).filter((dateKey) => !isNonWorkingDay(dateKey));
 }

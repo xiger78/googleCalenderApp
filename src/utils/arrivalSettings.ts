@@ -130,6 +130,16 @@ export function isBulkApplyTarget(arrivalType: WorkArrivalType): boolean {
   return arrivalType === 'normal' || arrivalType === 'remote';
 }
 
+export function isBulkApplyEligibleDate(
+  dateKey: string,
+  workDays: string[],
+  workDayTypes: Record<string, WorkArrivalType>
+): boolean {
+  if (isNonWorkingDay(dateKey)) return false;
+  const arrivalType = getArrivalTypeForDate(dateKey, workDays, workDayTypes);
+  return isBulkApplyTarget(arrivalType);
+}
+
 export function bulkDraftForArrivalType(
   arrivalType: WorkArrivalType,
   bulkDraft: DayTimeDraft

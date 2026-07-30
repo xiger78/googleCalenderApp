@@ -34,13 +34,12 @@ import {
 import { ArrivalTypeConfig, CommuteTime, WorkArrivalType } from '../types';
 import {
   ARRIVAL_BORDER_HEX,
-  bulkDraftForArrivalType,
   draftFromCommuteTime,
   getArrivalColorHex,
   getArrivalTypeForDate,
   getCommuteRowColors,
   getEffectiveCommuteTimes,
-  isBulkApplyTarget,
+  isBulkApplyEligibleDate,
 } from '../utils/arrivalSettings';
 
 type PreviewItem = {
@@ -197,16 +196,12 @@ export function CommuteTimeScreen() {
     () => ({ morningBreakMinutes, lunchBreakMinutes, eveningBreakMinutes }),
     [morningBreakMinutes, lunchBreakMinutes, eveningBreakMinutes]
   );
-  const bulkApplyDays = useMemo(
-    () => getBulkApplyDateKeys(year, month),
-    [year, month]
-  );
   const bulkTargetDays = useMemo(
     () =>
-      bulkApplyDays.filter((dateKey) =>
-        isBulkApplyTarget(getArrivalTypeForDate(dateKey, data.workDays, data.workDayTypes))
+      getBulkApplyDateKeys(year, month).filter((dateKey) =>
+        isBulkApplyEligibleDate(dateKey, data.workDays, data.workDayTypes)
       ),
-    [bulkApplyDays, data.workDays, data.workDayTypes]
+    [year, month, data.workDays, data.workDayTypes]
   );
   const commuteLegendItems = useMemo(
     () =>
@@ -257,7 +252,7 @@ export function CommuteTimeScreen() {
       Alert.alert(tr('alertInputError'), tr('alertInvalidClockOut'));
       return;
     }
-    if (bulkApplyDays.length === 0) {
+    if (bulkTargetDays.length === 0) {
       Alert.alert(tr('alertNotice'), tr('alertBulkNoDays'));
       return;
     }
@@ -272,13 +267,11 @@ export function CommuteTimeScreen() {
     };
     let appliedCount = 0;
 
-    bulkApplyDays.forEach((dateKey) => {
-      const arrivalType = getArrivalTypeForDate(dateKey, data.workDays, data.workDayTypes);
-      const draft = bulkDraftForArrivalType(arrivalType, bulkDraft);
-      if (!draft) return;
+    bulkTargetDays.forEach((dateKey) => {
+      if (isNonWorkingDay(dateKey)) return;
 
-      next[dateKey] = draft;
-      nextCommute[dateKey] = draftToCommuteTime(draft);
+      next[dateKey] = bulkDraft;
+      nextCommute[dateKey] = draftToCommuteTime(bulkDraft);
       appliedCount++;
     });
 
