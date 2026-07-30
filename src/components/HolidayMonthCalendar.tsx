@@ -7,12 +7,12 @@ import {
 } from '../utils/dateUtils';
 import { useLanguage } from '../context/LanguageContext';
 import { getWeekdays } from '../i18n/translations';
-import { JapaneseHolidayDetail } from '../utils/japaneseHolidays';
+import { HolidayDetail } from '../utils/holidays';
 
 interface Props {
   year: number;
   month: number;
-  holidays: JapaneseHolidayDetail[];
+  holidays: HolidayDetail[];
 }
 
 export function HolidayMonthCalendar({ year, month, holidays }: Props) {

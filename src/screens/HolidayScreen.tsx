@@ -11,35 +11,46 @@ import { HolidayMonthCalendar } from '../components/HolidayMonthCalendar';
 import { useLanguage } from '../context/LanguageContext';
 import { formatSlashDateWithWeekday, MONTHS } from '../utils/dateUtils';
 import {
-  getJapaneseHolidayDetailsForYear,
-  getJapaneseHolidaysForMonth,
-  JapaneseHolidayDetail,
-} from '../utils/japaneseHolidays';
+  getHolidayDetailsForYear,
+  getHolidaysForMonth,
+  HOLIDAY_COUNTRIES,
+  HolidayCountry,
+  HolidayDetail,
+} from '../utils/holidays';
 import { getWeekdays, TranslationKey } from '../i18n/translations';
+
+const COUNTRY_LABEL_KEYS: Record<HolidayCountry, TranslationKey> = {
+  jp: 'holidayCountryJp',
+  kr: 'holidayCountryKr',
+  cn: 'holidayCountryCn',
+  us: 'holidayCountryUs',
+};
 
 export function HolidayScreen() {
   const { language, tr } = useLanguage();
   const weekdays = getWeekdays(language);
   const now = new Date();
 
+  const [country, setCountry] = React.useState<HolidayCountry>('jp');
   const [year, setYear] = React.useState<number | null>(null);
   const [month, setMonth] = React.useState<number | null>(null);
 
-  const holidayName = (detail: JapaneseHolidayDetail) => tr(detail.nameKey as TranslationKey);
+  const holidayName = (detail: HolidayDetail) => tr(detail.nameKey as TranslationKey);
 
   const yearHolidays = useMemo(() => {
     if (year === null) return [];
-    return getJapaneseHolidayDetailsForYear(year);
-  }, [year]);
+    return getHolidayDetailsForYear(country, year);
+  }, [country, year]);
 
   const monthHolidays = useMemo(() => {
     if (year === null || month === null) return [];
-    return getJapaneseHolidaysForMonth(year, month);
-  }, [year, month]);
+    return getHolidaysForMonth(country, year, month);
+  }, [country, year, month]);
 
   const displayHolidays = month !== null ? monthHolidays : yearHolidays;
 
   const handleReset = () => {
+    setCountry('jp');
     setYear(null);
     setMonth(null);
   };
@@ -63,7 +74,7 @@ export function HolidayScreen() {
     setMonth((prev) => (prev === m ? null : m));
   };
 
-  const formatLine = (detail: JapaneseHolidayDetail) => {
+  const formatLine = (detail: HolidayDetail) => {
     const dateLabel = formatSlashDateWithWeekday(detail.dateKey, weekdays);
     return `${dateLabel}:${holidayName(detail)}`;
   };
@@ -77,6 +88,25 @@ export function HolidayScreen() {
             <MaterialCommunityIcons name="refresh" size={14} color="#555" />
             <Text style={styles.resetBtnText}>{tr('resetWorkDates')}</Text>
           </TouchableOpacity>
+        </View>
+
+        <Text style={styles.countryLabel}>{tr('holidayCountryLabel')}</Text>
+        <View style={styles.countryRow}>
+          {HOLIDAY_COUNTRIES.map((code) => {
+            const active = country === code;
+            return (
+              <TouchableOpacity
+                key={code}
+                style={[styles.countryChip, active && styles.countryChipActive]}
+                onPress={() => setCountry(code)}
+                activeOpacity={0.85}
+              >
+                <Text style={[styles.countryChipText, active && styles.countryChipTextActive]}>
+                  {tr(COUNTRY_LABEL_KEYS[code])}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         <View style={styles.yearRow}>
@@ -164,7 +194,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 12,
     gap: 8,
   },
   title: { fontSize: 18, fontWeight: '700', color: '#222', flex: 1 },
@@ -180,6 +210,32 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
   },
   resetBtnText: { fontSize: 12, fontWeight: '600', color: '#555' },
+  countryLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#444',
+    marginBottom: 8,
+  },
+  countryRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  countryChip: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    backgroundColor: '#fafafa',
+  },
+  countryChipActive: {
+    backgroundColor: '#E3F2FD',
+    borderColor: '#1976D2',
+  },
+  countryChipText: { fontSize: 13, fontWeight: '600', color: '#555' },
+  countryChipTextActive: { color: '#1976D2', fontWeight: '700' },
   yearRow: {
     flexDirection: 'row',
     alignItems: 'center',
