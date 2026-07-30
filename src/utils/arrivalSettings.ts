@@ -186,6 +186,10 @@ export function getEffectiveCommuteTimes(
 
   if (arrivalType === 'vacation') return null;
 
+  if (shouldClearHolidayCommuteTime(dateKey, workDays)) {
+    return null;
+  }
+
   const normalizedIn = savedIn ? normalizeTimeString(savedIn) : null;
   if (normalizedIn && normalizedIn !== '00:00') {
     const derived = configToCommuteTimes(
@@ -205,8 +209,7 @@ export function getEffectiveCommuteTimes(
   }
 
   const shouldUseConfigDefaults =
-    (workDays.includes(dateKey) && !isNonWorkingDay(dateKey)) ||
-    Boolean(savedIn || savedOut) ||
+    workDays.includes(dateKey) ||
     (arrivalType === 'remote' && !isNonWorkingDay(dateKey));
 
   if (shouldUseConfigDefaults) {

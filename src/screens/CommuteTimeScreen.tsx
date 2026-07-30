@@ -103,6 +103,7 @@ function DayTimeRow({
   onUpdatePart,
   onMemoChange,
   onSave,
+  onDelete,
   tr,
   weekdays,
 }: {
@@ -114,6 +115,7 @@ function DayTimeRow({
   onUpdatePart: (dateKey: string, field: keyof DayTimeDraft, value: string) => void;
   onMemoChange: (dateKey: string, value: string) => void;
   onSave: (dateKey: string) => void;
+  onDelete: (dateKey: string) => void;
   tr: (key: TranslationKey, params?: Record<string, string | number>) => string;
   weekdays: string[];
 }) {
@@ -150,7 +152,14 @@ function DayTimeRow({
           textAlignVertical="top"
         />
       </View>
-      <Button title={tr('saveDay')} onPress={() => onSave(dateKey)} variant="success" fullWidth />
+      <View style={styles.dayActionRow}>
+        <View style={styles.dayActionBtn}>
+          <Button title={tr('saveDay')} onPress={() => onSave(dateKey)} variant="success" fullWidth />
+        </View>
+        <View style={styles.dayActionBtn}>
+          <Button title={tr('deleteDay')} onPress={() => onDelete(dateKey)} variant="danger" fullWidth />
+        </View>
+      </View>
     </View>
   );
 }
@@ -170,7 +179,8 @@ export function CommuteTimeScreen() {
   const [preview, setPreview] = useState<PreviewItem[]>([]);
   const [previewTotalHours, setPreviewTotalHours] = useState<string | null>(null);
 
-  const { data, setCommuteTimes, setDayMemos } = useWorkDataContext();
+  const { data, setCommuteTimes, saveDayCommuteAndMemo, clearDayCommuteAndMemo, setDayMemos } =
+    useWorkDataContext();
   const {
     language,
     lunchBreakMinutes,
@@ -223,19 +233,28 @@ export function CommuteTimeScreen() {
 
   const getDraftForDate = (dateKey: string): DayTimeDraft => {
     if (draftParts[dateKey]) return draftParts[dateKey];
+
+    const saved = data.commuteTimes[dateKey];
+    if (saved && isValidCommutePair(saved.clockIn ?? '', saved.clockOut ?? '')) {
+      return draftFromCommuteTime(saved);
+    }
+
+    const isManualHoliday = shouldClearHolidayCommuteTime(dateKey, data.workDays);
+    if (isManualHoliday) {
+      return emptyDayTimeDraft();
+    }
+
     const effective = getEffectiveCommuteTimes(
       dateKey,
-      data.commuteTimes[dateKey],
+      saved,
       data.workDays,
       data.workDayTypes,
       arrivalConfigs,
       breakSettings
     );
     if (effective) return draftFromCommuteTime(effective);
-    if (shouldClearHolidayCommuteTime(dateKey, data.workDays)) {
-      return emptyDayTimeDraft();
-    }
-    return draftFromCommuteTime(data.commuteTimes[dateKey]);
+
+    return emptyDayTimeDraft();
   };
 
   const updateDraftPart = (dateKey: string, field: keyof DayTimeDraft, value: string) => {
@@ -336,7 +355,7 @@ export function CommuteTimeScreen() {
   };
 
   const handleSaveDay = async (dateKey: string) => {
-    const draft = getDraftForDate(dateKey);
+    const draft = draftParts[dateKey] ?? getDraftForDate(dateKey);
     if (!isValidTime(draft.clockInHour, draft.clockInMinute)) {
       Alert.alert(tr('alertInputError'), tr('alertInvalidClockIn'));
       return;
@@ -346,24 +365,18 @@ export function CommuteTimeScreen() {
       return;
     }
 
-    const merged = { ...data.commuteTimes, [dateKey]: draftToCommuteTime(draft) };
-
-    const mergedMemos = { ...data.dayMemos };
-    const memo = getMemoForDate(dateKey).trim();
-    if (memo) {
-      mergedMemos[dateKey] = memo;
-    } else {
-      delete mergedMemos[dateKey];
+    const times = draftToCommuteTime(draft);
+    if (!isValidCommutePair(times.clockIn, times.clockOut)) {
+      Alert.alert(tr('alertInputError'), tr('alertInvalidClockOut'));
+      return;
     }
 
-    await setCommuteTimes(merged);
-    await setDayMemos(mergedMemos);
+    const memo = getMemoForDate(dateKey);
+    const savedDraft = draftFromCommuteTime(times);
 
-    setDraftParts((prev) => {
-      const next = { ...prev };
-      delete next[dateKey];
-      return next;
-    });
+    await saveDayCommuteAndMemo(dateKey, times, memo);
+
+    setDraftParts((prev) => ({ ...prev, [dateKey]: savedDraft }));
     setMemoDrafts((prev) => {
       const next = { ...prev };
       delete next[dateKey];
@@ -374,6 +387,33 @@ export function CommuteTimeScreen() {
       tr('alertSaved'),
       tr('alertDaySaved', { date: formatSlashDateWithWeekday(dateKey, weekdays) })
     );
+  };
+
+  const handleDeleteDay = (dateKey: string) => {
+    Alert.alert(tr('deleteDayConfirmTitle'), tr('deleteDayConfirmMessage'), [
+      { text: tr('cancel'), style: 'cancel' },
+      {
+        text: tr('deleteDay'),
+        style: 'destructive',
+        onPress: async () => {
+          await clearDayCommuteAndMemo(dateKey);
+          setDraftParts((prev) => {
+            const next = { ...prev };
+            delete next[dateKey];
+            return next;
+          });
+          setMemoDrafts((prev) => {
+            const next = { ...prev };
+            delete next[dateKey];
+            return next;
+          });
+          Alert.alert(
+            tr('alertDone'),
+            tr('alertDayDeleted', { date: formatSlashDateWithWeekday(dateKey, weekdays) })
+          );
+        },
+      },
+    ]);
   };
 
   const handleSave = async () => {
@@ -540,6 +580,7 @@ export function CommuteTimeScreen() {
               onUpdatePart={updateDraftPart}
               onMemoChange={updateMemo}
               onSave={handleSaveDay}
+              onDelete={handleDeleteDay}
               tr={tr}
               weekdays={weekdays}
             />
@@ -647,6 +688,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     minHeight: 40,
   },
+  dayActionRow: { flexDirection: 'row', gap: 8 },
+  dayActionBtn: { flex: 1 },
   preview: { marginTop: 24, padding: 16, backgroundColor: '#f3e5f5', borderRadius: 12 },
   previewTitle: { fontSize: 15, fontWeight: '600', marginBottom: 8, color: '#6a1b9a' },
   previewTotal: {

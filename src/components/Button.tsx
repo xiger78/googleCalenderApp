@@ -4,7 +4,7 @@ import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-nat
 interface Props {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'success';
+  variant?: 'primary' | 'secondary' | 'success' | 'danger';
   disabled?: boolean;
   loading?: boolean;
   fullWidth?: boolean;
@@ -60,6 +60,9 @@ const styles = StyleSheet.create({
   },
   success: {
     backgroundColor: '#4CAF50',
+  },
+  danger: {
+    backgroundColor: '#E53935',
   },
   disabled: {
     opacity: 0.5,
